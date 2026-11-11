@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Panel DM — Mesa D&D</title>
+<style>
+  :root {
+    --bg:#15121a; --card:#211c27; --card2:#2a2431; --line:#352d3e;
+    --txt:#ede7f3; --mut:#a296b0; --acc:#d4a94e; --acc2:#8f6fd1;
+    --ok:#5fbf7a; --warn:#e0a24a; --err:#e06464; --pj:#5b8fd9; --en:#d0605a; --al:#5fbf7a;
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { margin:0; background:var(--bg); color:var(--txt); font-family:system-ui,-apple-system,"Segoe UI",sans-serif; }
+  body { padding-bottom:70px; }
+  header { position:sticky; top:0; z-index:5; background:var(--bg); border-bottom:1px solid var(--line); padding:10px 14px; display:flex; align-items:center; gap:10px; }
+  header h1 { font-size:1.05rem; margin:0; flex:1; }
+  header .ronda { font-size:.85rem; color:var(--mut); }
+  nav { position:fixed; bottom:0; left:0; right:0; z-index:5; display:flex; background:#1b1720; border-top:1px solid var(--line); padding-bottom:env(safe-area-inset-bottom); }
+  nav button { flex:1; background:none; border:0; color:var(--mut); padding:10px 0 12px; font-size:.75rem; display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer; }
+  nav button span { font-size:1.25rem; }
+  nav button.on { color:var(--acc); }
+  main { max-width:760px; margin:0 auto; padding:12px; }
+  .tab { display:none; } .tab.on { display:block; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:10px; }
+  .card.turno { border-color:var(--acc); box-shadow:0 0 0 1px var(--acc) inset; }
+  .card.caido { opacity:.65; }
+  h2 { font-size:1rem; margin:4px 0 10px; color:var(--acc); }
+  h3 { font-size:.9rem; margin:12px 0 6px; color:var(--mut); font-weight:600; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .grow { flex:1; min-width:0; }
+  .between { justify-content:space-between; }
+  button.b { background:var(--card2); color:var(--txt); border:1px solid var(--line); border-radius:9px; padding:9px 12px; font-size:.9rem; cursor:pointer; }
+  button.b:active { transform:scale(.97); }
+  button.p { background:var(--acc); color:#1b1408; border-color:var(--acc); font-weight:700; }
+  button.dmg { background:#4a2326; border-color:#6b2d31; }
+  button.heal { background:#203d2a; border-color:#2d5a3b; }
+  button.tmp { background:#2b2a4a; border-color:#3e3c6b; }
+  button.s { padding:6px 9px; font-size:.8rem; }
+  button.x { background:none; border:0; color:var(--mut); font-size:1.1rem; cursor:pointer; padding:4px 6px; }
+  input, select, textarea { background:#120f16; color:var(--txt); border:1px solid var(--line); border-radius:8px; padding:8px; font-size:16px; font-family:inherit; }
+  input[type=number] { width:64px; }
+  input.w { width:100%; }
+  label.f { display:flex; flex-direction:column; gap:3px; font-size:.75rem; color:var(--mut); }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:8px; }
+  .nombre { font-weight:700; font-size:1rem; }
+  .badge { font-size:.68rem; padding:2px 7px; border-radius:20px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; }
+  .b-pj { background:var(--pj); color:#0b1424; } .b-enemigo { background:var(--en); color:#240b0b; } .b-aliado { background:var(--al); color:#0b2412; }
+  .ini { width:48px; text-align:center; font-weight:700; font-size:1.05rem; }
+  .stat { font-size:.8rem; color:var(--mut); }
+  .stat b { color:var(--txt); font-size:.95rem; }
+  .barra { height:8px; background:#120f16; border-radius:6px; overflow:hidden; margin:8px 0 6px; }
+  .barra i { display:block; height:100%; background:var(--ok); transition:width .25s; }
+  .barra i.m { background:var(--warn); } .barra i.l { background:var(--err); }
+  .chips { display:flex; flex-wrap:wrap; gap:5px; margin-top:6px; }
+  .chip { font-size:.75rem; background:var(--card2); border:1px solid var(--line); border-radius:20px; padding:3px 9px; cursor:pointer; }
+  .chip.on { background:var(--acc2); border-color:var(--acc2); color:#fff; }
+  .chip.conc { background:#5a4a1c; border-color:var(--acc); }
+  .aviso { background:#3a2e12; border:1px solid var(--acc); border-radius:8px; padding:8px; font-size:.85rem; margin-top:8px; }
+  .muerte { display:flex; gap:12px; align-items:center; margin-top:8px; font-size:.85rem; }
+  .pips { display:inline-flex; gap:4px; }
+  .pip { width:20px; height:20px; border-radius:50%; border:2px solid var(--line); background:#120f16; cursor:pointer; padding:0; }
+  .pip.ok { background:var(--ok); border-color:var(--ok); } .pip.ko { background:var(--err); border-color:var(--err); }
+  .pip.slot { border-radius:5px; } .pip.slot.usado { background:#120f16; } .pip.slot.libre { background:var(--acc2); border-color:var(--acc2); }
+  .slots { display:flex; flex-direction:column; gap:6px; margin-top:6px; }
+  .slots .row span { width:40px; font-size:.8rem; color:var(--mut); }
+  details summary { cursor:pointer; color:var(--mut); font-size:.85rem; margin-top:8px; }
+  .vacio { text-align:center; color:var(--mut); padding:24px 10px; font-size:.95rem; }
+  .dados { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  .dados button { padding:16px 0; font-size:1.05rem; font-weight:700; }
+  .resultado { font-size:2.6rem; font-weight:800; text-align:center; color:var(--acc); margin:8px 0 2px; }
+  .detalle { text-align:center; color:var(--mut); font-size:.85rem; min-height:1.2em; }
+  .hist { font-size:.85rem; color:var(--mut); }
+  .hist div { padding:5px 0; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; gap:8px; }
+  .hist b { color:var(--txt); }
+  .cond { padding:10px 0; border-bottom:1px solid var(--line); }
+  .cond b { color:var(--acc); }
+  .cond p { margin:4px 0 0; font-size:.88rem; color:#d5cddf; line-height:1.4; }
+  dialog { background:var(--card); color:var(--txt); border:1px solid var(--line); border-radius:14px; padding:16px; width:min(94vw,460px); }
+  dialog::backdrop { background:rgba(0,0,0,.6); }
+  .toast { position:fixed; left:50%; bottom:80px; transform:translateX(-50%); background:var(--card2); border:1px solid var(--acc); color:var(--txt); padding:10px 16px; border-radius:10px; font-size:.9rem; z-index:20; opacity:0; transition:opacity .2s; pointer-events:none; max-width:90vw; text-align:center; }
+  .toast.on { opacity:1; }
+  .seg { display:inline-flex; border:1px solid var(--line); border-radius:9px; overflow:hidden; }
+  .seg button { background:var(--card2); color:var(--mut); border:0; padding:8px 12px; font-size:.85rem; cursor:pointer; }
+  .seg button.on { background:var(--acc2); color:#fff; }
+  .pie { color:var(--mut); font-size:.72rem; text-align:center; margin:20px 0 4px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🐉 Panel DM</h1>
+  <span class="ronda" id="ronda"></span>
+</header>
+
+<main>
+  <!-- COMBATE -->
+  <section class="tab on" id="t-combate">
+    <div class="row" style="margin-bottom:10px">
+      <button class="b p grow" data-act="sig-turno">Siguiente turno ▶</button>
+      <button class="b" data-act="abrir-anadir">+ Añadir</button>
+    </div>
+    <div class="row" style="margin-bottom:12px">
+      <button class="b s" data-act="grupo-al-combate">Traer al grupo</button>
+      <button class="b s" data-act="tirar-ini">Tirar iniciativa (sin valor)</button>
+      <button class="b s" data-act="ordenar">Ordenar</button>
+      <button class="b s" data-act="fin-combate">Terminar combate</button>
+    </div>
+    <div id="lista-combate"></div>
+  </section>
+
+  <!-- GRUPO -->
+  <section class="tab" id="t-grupo">
+    <div class="row" style="margin-bottom:12px">
+      <button class="b p grow" data-act="nuevo-pj">+ Nuevo personaje</button>
+      <button class="b" data-act="descanso-largo-todos">Descanso largo (todos)</button>
+    </div>
+    <div id="lista-grupo"></div>
+  </section>
+
+  <!-- DADOS -->
+  <section class="tab" id="t-dados">
+    <div class="card">
+      <div class="resultado" id="res">—</div>
+      <div class="detalle" id="res-det"></div>
+    </div>
+    <div class="row" style="margin-bottom:10px">
+      <span class="stat">d20:</span>
+      <div class="seg" id="modo-d20">
+        <button data-modo="normal" class="on">Normal</button>
+        <button data-modo="ventaja">Ventaja</button>
+        <button data-modo="desventaja">Desventaja</button>
+      </div>
+    </div>
+    <div class="dados" style="margin-bottom:10px">
+      <button class="b" data-dado="4">d4</button><button class="b" data-dado="6">d6</button>
+      <button class="b" data-dado="8">d8</button><button class="b" data-dado="10">d10</button>
+      <button class="b" data-dado="12">d12</button><button class="b p" data-dado="20">d20</button>
+      <button class="b" data-dado="100">d100</button><button class="b" data-act="limpiar-hist">Borrar</button>
+    </div>
+    <div class="row" style="margin-bottom:12px">
+      <input class="grow" id="expr" placeholder="Ej: 2d6+3, 1d20+5, 4d6" autocomplete="off">
+      <button class="b p" data-act="tirar-expr">Tirar</button>
+    </div>
+    <div class="card"><h2>Historial</h2><div class="hist" id="hist"></div></div>
+  </section>
+
+  <!-- CONDICIONES -->
+  <section class="tab" id="t-cond">
+    <div class="card"><h2>Condiciones (reglas 2024)</h2><div id="lista-cond"></div></div>
+    <div class="card">
+      <h2>Respaldo</h2>
+      <p class="stat">Todo se guarda en este dispositivo. Exporta un respaldo de vez en cuando.</p>
+      <div class="row">
+        <button class="b" data-act="exportar">Exportar</button>
+        <button class="b" data-act="importar">Importar</button>
+        <button class="b" data-act="borrar-todo" style="color:var(--err)">Borrar todo</button>
+      </div>
+      <input type="file" id="archivo" accept="application/json" hidden>
+    </div>
+    <p class="pie">Basado en el SRD 5.2.1 de Wizards of the Coast LLC (CC-BY-4.0). Traducción y adaptación propias.</p>
+  </section>
+</main>
+
+<nav>
+  <button data-tab="combate" class="on"><span>⚔️</span>Combate</button>
+  <button data-tab="grupo"><span>🛡️</span>Grupo</button>
+  <button data-tab="dados"><span>🎲</span>Dados</button>
+  <button data-tab="cond"><span>📖</span>Referencia</button>
+</nav>
+
+<!-- Diálogo: añadir combatiente -->
+<dialog id="dlg-anadir">
+  <h2>Añadir al combate</h2>
+  <div class="grid">
+    <label class="f" style="grid-column:1/-1">Nombre<input class="w" id="a-nombre" placeholder="Goblin"></label>
+    <label class="f">Tipo
+      <select id="a-tipo"><option value="enemigo">Enemigo</option><option value="aliado">Aliado</option><option value="pj">PJ</option></select>
+    </label>
+    <label class="f">Cantidad<input type="number" id="a-cant" value="1" min="1" max="20"></label>
+    <label class="f">PG<input type="number" id="a-pg" value="7" min="1"></label>
+    <label class="f">CA<input type="number" id="a-ca" value="13" min="1"></label>
+    <label class="f">Bono iniciativa<input type="number" id="a-bono" value="2"></label>
+    <label class="f">Iniciativa<input type="number" id="a-ini" placeholder="tirar"></label>
+  </div>
+  <p class="stat">Deja la iniciativa vacía para tirarla automáticamente (1d20 + bono). Con cantidad &gt; 1 se numeran: Goblin 1, Goblin 2…</p>
+  <div class="row between" style="margin-top:12px">
+    <button class="b" data-act="cerrar-dlg">Cancelar</button>
+    <button class="b p" data-act="confirmar-anadir">Añadir</button>
+  </div>
+</dialog>
+
+<!-- Diálogo: editar personaje del grupo -->
+<dialog id="dlg-pj">
+  <h2 id="pj-titulo">Personaje</h2>
+  <div class="grid">
+    <label class="f" style="grid-column:1/-1">Nombre del personaje<input class="w" id="p-nombre"></label>
+    <label class="f" style="grid-column:1/-1">Jugador<input class="w" id="p-jugador"></label>
+    <label class="f">Clase<input class="w" id="p-clase"></label>
+    <label class="f">Nivel<input type="number" id="p-nivel" min="1" max="20" value="1"></label>
+    <label class="f">PG máximos<input type="number" id="p-pgmax" min="1" value="10"></label>
+    <label class="f">CA<input type="number" id="p-ca" min="1" value="12"></label>
+    <label class="f">Bono iniciativa<input type="number" id="p-bono" value="0"></label>
+  </div>
+  <h3>Espacios de conjuro (máximo por nivel)</h3>
+  <div class="grid" id="p-slots"></div>
+  <label class="f" style="margin-top:10px">Notas<textarea id="p-notas" rows="2"></textarea></label>
+  <div class="row between" style="margin-top:12px">
+    <button class="b" data-act="cerrar-dlg">Cancelar</button>
+    <button class="b p" data-act="guardar-pj">Guardar</button>
+  </div>
+</dialog>
+
+<!-- Diálogo: condiciones de un combatiente -->
+<dialog id="dlg-cond">
+  <h2 id="cond-titulo">Condiciones</h2>
+  <div class="chips" id="cond-chips"></div>
+  <div class="row" style="margin-top:12px">
+    <span class="stat">Agotamiento:</span>
+    <button class="b s" data-act="agot" data-d="-1">−</button>
+    <b id="agot-nivel">0</b>
+    <button class="b s" data-act="agot" data-d="1">+</button>
+  </div>
+  <div class="row between" style="margin-top:14px">
+    <span></span><button class="b p" data-act="cerrar-dlg">Listo</button>
+  </div>
+</dialog>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ DATOS DE REFERENCIA (SRD 5.2.1, traducción propia) ============ */
+const CONDICIONES = [
+  ["Agarrado", "Grappled", "Tu velocidad es 0. Desventaja en ataques contra cualquiera que no sea quien te agarra. Quien te agarra puede arrastrarte."],
+  ["Apresado", "Restrained", "Velocidad 0. Los ataques contra ti tienen ventaja; tus ataques, desventaja. Desventaja en salvaciones de Destreza."],
+  ["Asustado", "Frightened", "Desventaja en pruebas y ataques mientras veas la fuente del miedo. No puedes acercarte a ella voluntariamente."],
+  ["Aturdido", "Stunned", "Estás Incapacitado. Fallas automáticamente las salvaciones de Fuerza y Destreza. Los ataques contra ti tienen ventaja."],
+  ["Cegado", "Blinded", "No ves: fallas pruebas que requieran vista. Los ataques contra ti tienen ventaja; tus ataques, desventaja."],
+  ["Derribado", "Prone", "Solo puedes arrastrarte o levantarte (cuesta la mitad de tu velocidad). Desventaja en tus ataques. Ataques contra ti: ventaja a 5 pies, desventaja más lejos."],
+  ["Ensordecido", "Deafened", "No oyes: fallas pruebas que requieran oído."],
+  ["Envenenado", "Poisoned", "Desventaja en tiradas de ataque y pruebas de característica."],
+  ["Hechizado", "Charmed", "No puedes atacar ni dañar a quien te hechizó. Esa criatura tiene ventaja en pruebas para interactuar socialmente contigo."],
+  ["Incapacitado", "Incapacitated", "No puedes tomar acciones, acciones adicionales ni reacciones. Pierdes la concentración y no puedes hablar. Desventaja en iniciativa si estás así al tirarla."],
+  ["Inconsciente", "Unconscious", "Incapacitado y Derribado; sueltas lo que sostienes. Velocidad 0. Fallas salvaciones de FUE y DES. Ataques contra ti con ventaja; si impactan a 5 pies, son críticos."],
+  ["Invisible", "Invisible", "Ventaja en iniciativa. Si no pueden verte: tus ataques tienen ventaja y los ataques contra ti, desventaja."],
+  ["Paralizado", "Paralyzed", "Incapacitado, velocidad 0. Fallas salvaciones de FUE y DES. Ataques contra ti con ventaja; si impactan a 5 pies, son críticos."],
+  ["Petrificado", "Petrified", "Te conviertes en piedra: Incapacitado, velocidad 0. Ataques contra ti con ventaja. Fallas salvaciones de FUE y DES. Resistencia a todo el daño, inmune a veneno."],
+];
+const AGOTAMIENTO_TXT = "Acumulativo: cada nivel resta 2 a todas tus tiradas d20 y 5 pies a tu velocidad. Un descanso largo quita 1 nivel. En el nivel 6 mueres.";
+
+/* ============ ESTADO + GUARDADO LOCAL ============ */
+const CLAVE = "mesa-dnd-dm-v1";
+const nuevoEstado = () => ({ grupo:{}, combate:{ ronda:0, turno:0, lista:[] }, historial:[] });
+let E;
+try { E = JSON.parse(localStorage.getItem(CLAVE)) || nuevoEstado(); } catch { E = nuevoEstado(); }
+function guardar() { try { localStorage.setItem(CLAVE, JSON.stringify(E)); } catch {} }
+const uid = () => Math.random().toString(36).slice(2, 10);
+
+/* ============ UTILIDADES ============ */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const d = n => 1 + Math.floor(Math.random() * n);
+function toast(t) { const el = $("#toast"); el.textContent = t; el.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("on"), 2600); }
+const num = (v, def = 0) => { const n = parseInt(v, 10); return Number.isFinite(n) ? n : def; };
+
+// Un combatiente PJ guarda PG/espacios en su ficha del grupo (una sola fuente de verdad).
+const fuente = c => (c.ref && E.grupo[c.ref]) ? E.grupo[c.ref] : c;
+
+/* ============ COMBATE ============ */
+function anadirCombatiente({ nombre, tipo, pg, ca, bono, ini, ref = null }) {
+  const c = { id: uid(), nombre, tipo, ini: ini ?? null, bono: bono || 0, ref,
+              condiciones: {}, agot: 0, conc: false, muerte: { ok: 0, ko: 0 } };
+  if (!ref) { c.pg = pg; c.pgMax = pg; c.pgTemp = 0; c.ca = ca; }
+  E.combate.lista.push(c);
+  return c;
+}
+function ordenar() {
+  const actual = E.combate.lista[E.combate.turno]?.id;
+  E.combate.lista.sort((a, b) => (b.ini ?? -99) - (a.ini ?? -99) || (b.bono - a.bono));
+  const i = E.combate.lista.findIndex(c => c.id === actual);
+  E.combate.turno = i >= 0 ? i : 0;
+}
+function siguienteTurno() {
+  const L = E.combate.lista;
+  if (!L.length) return toast("Añade combatientes primero.");
+  if (E.combate.ronda === 0) { ordenar(); E.combate.ronda = 1; E.combate.turno = 0; }
+  else {
+    E.combate.turno++;
+    if (E.combate.turno >= L.length) { E.combate.turno = 0; E.combate.ronda++; }
+  }
+  const c = L[E.combate.turno];
+  const f = fuente(c);
+  let msg = `Turno de ${c.nombre}`;
+  if (f.pg <= 0 && c.tipo === "pj") msg += " — ¡salvación contra muerte!";
+  toast(msg);
+}
+function aplicarPG(c, modo, cant) {
+  const f = fuente(c);
+  if (!cant || cant < 0) return;
+  if (modo === "dano") {
+    let resto = cant;
+    if (f.pgTemp > 0) { const abs = Math.min(f.pgTemp, resto); f.pgTemp -= abs; resto -= abs; }
+    const antes = f.pg;
+    f.pg = Math.max(0, f.pg - resto);
+    if (antes > 0 && f.pg === 0) toast(`${c.nombre} cae a 0 PG`);
+    else if (antes === 0 && resto > 0 && c.tipo === "pj") { c.muerte.ko = Math.min(3, c.muerte.ko + 1); toast("Daño a 0 PG: +1 fallo de salvación contra muerte"); }
+    if (c.conc && resto > 0) {
+      const cd = Math.min(30, Math.max(10, Math.floor(resto / 2)));
+      c._avisoConc = `Concentración: salvación de Constitución CD ${cd}`;
+    }
+  } else if (modo === "curar") {
+    if (f.pg === 0) c.muerte = { ok: 0, ko: 0 };
+    f.pg = Math.min(f.pgMax, f.pg + cant);
+  } else if (modo === "temp") {
+    f.pgTemp = Math.max(f.pgTemp || 0, cant); // los PG temporales no se suman: te quedas con el mayor
+  }
+}
+
+/* ============ RENDER ============ */
+function render() {
+  guardar();
+  const C = E.combate;
+  $("#ronda").textContent = C.ronda ? `Ronda ${C.ronda}` : "Sin combate";
+  renderCombate(); renderGrupo(); renderHist();
+}
+function barra(f) {
+  const p = f.pgMax ? Math.max(0, Math.min(100, f.pg / f.pgMax * 100)) : 0;
+  return `<div class="barra"><i class="${p <= 25 ? "l" : p <= 50 ? "m" : ""}" style="width:${p}%"></i></div>`;
+}
+function slotsHTML(f, ctx) {
+  const niveles = Object.keys(f.espacios || {}).filter(n => f.espacios[n].max > 0);
+  if (!niveles.length) return "";
+  return `<div class="slots">${niveles.map(n => {
+    const s = f.espacios[n];
+    const pips = Array.from({ length: s.max }, (_, i) =>
+      `<button class="pip slot ${i < s.max - s.usados ? "libre" : "usado"}" data-act="slot" data-${ctx}="${ctx === "pj" ? f.id : ""}" data-n="${n}" data-i="${i}" aria-label="Espacio nivel ${n}"></button>`).join("");
+    return `<div class="row"><span>Nv ${n}</span><div class="pips">${pips}</div></div>`;
+  }).join("")}</div>`;
+}
+function renderCombate() {
+  const L = E.combate.lista, el = $("#lista-combate");
+  if (!L.length) { el.innerHTML = `<div class="vacio">No hay nadie en combate.<br>Usa <b>+ Añadir</b> o <b>Traer al grupo</b>.</div>`; return; }
+  el.innerHTML = L.map((c, idx) => {
+    const f = fuente(c);
+    const turno = E.combate.ronda > 0 && idx === E.combate.turno;
+    const conds = Object.keys(c.condiciones).filter(k => c.condiciones[k]);
+    const chips = conds.map(k => `<span class="chip on" data-act="ver-cond" data-id="${c.id}">${esc(k)}</span>`).join("")
+      + (c.agot ? `<span class="chip on" data-act="ver-cond" data-id="${c.id}">Agotamiento ${c.agot}</span>` : "")
+      + `<span class="chip ${c.conc ? "conc" : ""}" data-act="conc" data-id="${c.id}">${c.conc ? "🔮 Concentrando" : "Concentración"}</span>`
+      + `<span class="chip" data-act="ver-cond" data-id="${c.id}">+ condición</span>`;
+    const muerte = (c.tipo === "pj" && f.pg === 0) ? `
+      <div class="muerte">
+        <span>Salvación vs muerte</span>
+        <span class="pips">${[0,1,2].map(i => `<button class="pip ${i < c.muerte.ok ? "ok" : ""}" data-act="muerte" data-t="ok" data-id="${c.id}" data-i="${i}" aria-label="Éxito"></button>`).join("")}</span>
+        <span class="pips">${[0,1,2].map(i => `<button class="pip ${i < c.muerte.ko ? "ko" : ""}" data-act="muerte" data-t="ko" data-id="${c.id}" data-i="${i}" aria-label="Fallo"></button>`).join("")}</span>
+        ${c.muerte.ok >= 3 ? "<b style='color:var(--ok)'>Estable</b>" : c.muerte.ko >= 3 ? "<b style='color:var(--err)'>Muerto</b>" : ""}
+      </div>` : "";
+    const aviso = c._avisoConc ? `<div class="aviso">⚠️ ${esc(c._avisoConc)} <button class="x" data-act="ok-aviso" data-id="${c.id}">✕</button></div>` : "";
+    return `
+    <div class="card ${turno ? "turno" : ""} ${f.pg <= 0 ? "caido" : ""}">
+      <div class="row">
+        <input class="ini" type="number" value="${c.ini ?? ""}" data-campo="ini" data-id="${c.id}" aria-label="Iniciativa">
+        <div class="grow">
+          <div class="row"><span class="nombre">${turno ? "▶ " : ""}${esc(c.nombre)}</span><span class="badge b-${c.tipo}">${c.tipo}</span></div>
+          <div class="stat">CA <b>${f.ca}</b> · PG <b>${f.pg}</b>/${f.pgMax}${f.pgTemp ? ` <span style="color:#9b97ff">+${f.pgTemp} temp</span>` : ""}</div>
+        </div>
+        <button class="x" data-act="quitar" data-id="${c.id}" aria-label="Quitar">✕</button>
+      </div>
+      ${barra(f)}
+      <div class="row">
+        <input type="number" min="0" placeholder="#" id="pg-${c.id}" aria-label="Cantidad">
+        <button class="b s dmg" data-act="pg" data-m="dano" data-id="${c.id}">Daño</button>
+        <button class="b s heal" data-act="pg" data-m="curar" data-id="${c.id}">Curar</button>
+        <button class="b s tmp" data-act="pg" data-m="temp" data-id="${c.id}">Temp</button>
+      </div>
+      <div class="chips">${chips}</div>
+      ${aviso}${muerte}
+      ${c.ref ? (Object.values(f.espacios || {}).some(s => s.max) ? `<details><summary>Espacios de conjuro</summary>${slotsHTML(f, "pj")}</details>` : "") : ""}
+    </div>`;
+  }).join("");
+}
+function renderGrupo() {
+  const G = Object.values(E.grupo), el = $("#lista-grupo");
+  if (!G.length) { el.innerHTML = `<div class="vacio">Aún no hay personajes.<br>Crea los PJ de tu mesa con <b>+ Nuevo personaje</b>.</div>`; return; }
+  el.innerHTML = G.map(p => `
+    <div class="card">
+      <div class="row">
+        <div class="grow">
+          <div class="nombre">${esc(p.nombre)}</div>
+          <div class="stat">${esc(p.clase || "—")} ${p.nivel ? "nv " + p.nivel : ""}${p.jugador ? " · " + esc(p.jugador) : ""}</div>
+          <div class="stat">CA <b>${p.ca}</b> · PG <b>${p.pg}</b>/${p.pgMax}${p.pgTemp ? ` +${p.pgTemp} temp` : ""} · Ini ${p.bono >= 0 ? "+" : ""}${p.bono}</div>
+        </div>
+        <button class="b s" data-act="editar-pj" data-pj="${p.id}">Editar</button>
+      </div>
+      ${barra(p)}
+      ${slotsHTML(p, "pj")}
+      ${p.notas ? `<p class="stat" style="margin:8px 0 0">${esc(p.notas)}</p>` : ""}
+      <div class="row" style="margin-top:8px">
+        <button class="b s" data-act="descanso-largo" data-pj="${p.id}">Descanso largo</button>
+        <button class="b s" data-act="borrar-pj" data-pj="${p.id}" style="color:var(--err)">Borrar</button>
+      </div>
+    </div>`).join("");
+}
+function renderHist() {
+  $("#hist").innerHTML = E.historial.length
+    ? E.historial.map(h => `<div><span>${esc(h.e)}</span><span>${esc(h.det)} = <b>${h.t}</b></span></div>`).join("")
+    : `<div><span>Sin tiradas todavía</span></div>`;
+}
+function renderCondRef() {
+  $("#lista-cond").innerHTML = CONDICIONES.map(([es, en, t]) =>
+    `<div class="cond"><b>${es}</b> <span class="stat">(${en})</span><p>${t}</p></div>`).join("")
+    + `<div class="cond"><b>Agotamiento</b> <span class="stat">(Exhaustion)</span><p>${AGOTAMIENTO_TXT}</p></div>
+       <div class="cond"><b>Concentración</b><p>Si recibes daño mientras te concentras: salvación de Constitución con CD 10 o la mitad del daño (lo que sea mayor, máximo 30). Si fallas, el conjuro termina.</p></div>
+       <div class="cond"><b>Salvación contra muerte</b><p>A 0 PG, al inicio de tu turno tira 1d20: 10+ éxito, 9− fallo. 3 éxitos = estable; 3 fallos = muerte. 20 natural = recuperas 1 PG; 1 natural = 2 fallos. Recibir daño a 0 PG = 1 fallo.</p></div>`;
+}
+
+/* ============ DADOS ============ */
+let modoD20 = "normal";
+function registrar(e, det, t) {
+  E.historial.unshift({ e, det, t });
+  E.historial = E.historial.slice(0, 40);
+  $("#res").textContent = t; $("#res-det").textContent = `${e}: ${det}`;
+  render();
+}
+function tirarDado(n) {
+  if (n === 20 && modoD20 !== "normal") {
+    const a = d(20), b = d(20), t = modoD20 === "ventaja" ? Math.max(a, b) : Math.min(a, b);
+    registrar(`d20 (${modoD20})`, `[${a}, ${b}]`, t);
+  } else { const t = d(n); registrar(`d${n}`, `[${t}]`, t); }
+}
+function tirarExpresion(txt) {
+  const limpio = txt.replace(/\s+/g, "").toLowerCase();
+  if (!limpio || !/^[+-]?(\d*d\d+|\d+)([+-](\d*d\d+|\d+))*$/.test(limpio)) return toast("Formato no válido. Ej: 2d6+3");
+  let total = 0; const partes = [];
+  for (const m of limpio.matchAll(/([+-]?)(\d*d\d+|\d+)/g)) {
+    const signo = m[1] === "-" ? -1 : 1;
+    if (m[2].includes("d")) {
+      let [c, l] = m[2].split("d").map(x => parseInt(x || "1", 10));
+      c = Math.min(c, 100); l = Math.min(Math.max(l, 1), 1000);
+      const r = Array.from({ length: c }, () => d(l));
+      total += signo * r.reduce((a, b) => a + b, 0);
+      partes.push(`${signo < 0 ? "−" : ""}[${r.join(", ")}]`);
+    } else { total += signo * parseInt(m[2], 10); partes.push(`${signo < 0 ? "−" : "+"}${m[2]}`); }
+  }
+  registrar(txt, partes.join(" "), total);
+}
+
+/* ============ DIÁLOGOS ============ */
+let condObjetivo = null, pjEditando = null;
+function abrirPJ(id) {
+  pjEditando = id;
+  const p = id ? E.grupo[id] : { nombre:"", jugador:"", clase:"", nivel:1, pgMax:10, ca:12, bono:0, espacios:{}, notas:"" };
+  $("#pj-titulo").textContent = id ? "Editar personaje" : "Nuevo personaje";
+  $("#p-nombre").value = p.nombre; $("#p-jugador").value = p.jugador; $("#p-clase").value = p.clase;
+  $("#p-nivel").value = p.nivel; $("#p-pgmax").value = p.pgMax; $("#p-ca").value = p.ca; $("#p-bono").value = p.bono;
+  $("#p-notas").value = p.notas || "";
+  $("#p-slots").innerHTML = Array.from({ length: 9 }, (_, i) =>
+    `<label class="f">Nivel ${i + 1}<input type="number" min="0" max="4" id="p-s${i + 1}" value="${p.espacios?.[i + 1]?.max || 0}"></label>`).join("");
+  $("#dlg-pj").showModal();
+}
+function guardarPJ() {
+  const nombre = $("#p-nombre").value.trim();
+  if (!nombre) return toast("Ponle nombre al personaje.");
+  const viejo = pjEditando ? E.grupo[pjEditando] : null;
+  const pgMax = Math.max(1, num($("#p-pgmax").value, 10));
+  const espacios = {};
+  for (let n = 1; n <= 9; n++) {
+    const max = Math.max(0, num($(`#p-s${n}`).value));
+    if (max) espacios[n] = { max, usados: Math.min(viejo?.espacios?.[n]?.usados || 0, max) };
+  }
+  const p = {
+    id: viejo?.id || uid(), nombre, jugador: $("#p-jugador").value.trim(), clase: $("#p-clase").value.trim(),
+    nivel: num($("#p-nivel").value, 1), pgMax, ca: num($("#p-ca").value, 10), bono: num($("#p-bono").value),
+    pg: viejo ? Math.min(viejo.pg, pgMax) : pgMax, pgTemp: viejo?.pgTemp || 0, espacios, notas: $("#p-notas").value.trim()
+  };
+  E.grupo[p.id] = p;
+  E.combate.lista.forEach(c => { if (c.ref === p.id) c.nombre = p.nombre; });
+  $("#dlg-pj").close(); render();
+}
+function abrirCond(id) {
+  condObjetivo = id;
+  const c = E.combate.lista.find(x => x.id === id); if (!c) return;
+  $("#cond-titulo").textContent = `Condiciones — ${c.nombre}`;
+  $("#cond-chips").innerHTML = CONDICIONES.map(([es]) =>
+    `<span class="chip ${c.condiciones[es] ? "on" : ""}" data-act="toggle-cond" data-c="${es}">${es}</span>`).join("");
+  $("#agot-nivel").textContent = c.agot;
+  if (!$("#dlg-cond").open) $("#dlg-cond").showModal();
+}
+function descansoLargo(p) {
+  p.pg = p.pgMax; p.pgTemp = 0;
+  Object.values(p.espacios || {}).forEach(s => s.usados = 0);
+  E.combate.lista.forEach(c => { if (c.ref === p.id) { c.muerte = { ok: 0, ko: 0 }; if (c.agot) c.agot--; } });
+}
+
+/* ============ EVENTOS ============ */
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-act],[data-tab],[data-dado],[data-modo]");
+  if (!t) return;
+  if (t.dataset.tab) {
+    document.querySelectorAll("nav button").forEach(b => b.classList.toggle("on", b === t));
+    document.querySelectorAll(".tab").forEach(s => s.classList.toggle("on", s.id === "t-" + t.dataset.tab));
+    window.scrollTo(0, 0); return;
+  }
+  if (t.dataset.dado) return tirarDado(+t.dataset.dado);
+  if (t.dataset.modo) {
+    modoD20 = t.dataset.modo;
+    document.querySelectorAll("#modo-d20 button").forEach(b => b.classList.toggle("on", b === t)); return;
+  }
+  const id = t.dataset.id, c = id ? E.combate.lista.find(x => x.id === id) : null;
+  switch (t.dataset.act) {
+    case "sig-turno": siguienteTurno(); break;
+    case "ordenar": ordenar(); break;
+    case "abrir-anadir": $("#dlg-anadir").showModal(); setTimeout(() => $("#a-nombre").focus(), 50); return;
+    case "cerrar-dlg": t.closest("dialog").close(); render(); return;
+    case "confirmar-anadir": {
+      const nombre = $("#a-nombre").value.trim() || "Enemigo";
+      const cant = Math.min(20, Math.max(1, num($("#a-cant").value, 1)));
+      const bono = num($("#a-bono").value), iniFija = $("#a-ini").value.trim();
+      for (let i = 1; i <= cant; i++) anadirCombatiente({
+        nombre: cant > 1 ? `${nombre} ${i}` : nombre, tipo: $("#a-tipo").value,
+        pg: Math.max(1, num($("#a-pg").value, 1)), ca: num($("#a-ca").value, 10), bono,
+        ini: iniFija !== "" ? num(iniFija) : d(20) + bono });
+      if (E.combate.ronda > 0) toast("Añadido. Pulsa Ordenar si quieres reubicarlo.");
+      $("#dlg-anadir").close(); $("#a-nombre").value = ""; $("#a-ini").value = "";
+      break;
+    }
+    case "grupo-al-combate": {
+      const G = Object.values(E.grupo);
+      if (!G.length) return toast("No hay personajes en el Grupo.");
+      let n = 0;
+      G.forEach(p => { if (!E.combate.lista.some(c => c.ref === p.id)) { anadirCombatiente({ nombre: p.nombre, tipo: "pj", bono: p.bono, ref: p.id }); n++; } });
+      toast(n ? `${n} PJ añadidos. Escribe su iniciativa.` : "El grupo ya está en combate.");
+      break;
+    }
+    case "tirar-ini": {
+      let n = 0;
+      E.combate.lista.forEach(c => { if (c.ini === null || c.ini === "") { c.ini = d(20) + (c.bono || 0); n++; } });
+      toast(n ? `Iniciativa tirada para ${n}.` : "Todos tienen iniciativa.");
+      break;
+    }
+    case "fin-combate":
+      if (!confirm("¿Terminar el combate? Se quitan enemigos y aliados; los PJ conservan sus PG.")) return;
+      E.combate = { ronda: 0, turno: 0, lista: [] }; toast("Combate terminado."); break;
+    case "quitar": {
+      const i = E.combate.lista.findIndex(x => x.id === id);
+      if (i >= 0) { E.combate.lista.splice(i, 1); if (E.combate.turno > i || E.combate.turno >= E.combate.lista.length) E.combate.turno = Math.max(0, E.combate.turno - 1); }
+      break;
+    }
+    case "pg": aplicarPG(c, t.dataset.m, num($(`#pg-${id}`).value)); break;
+    case "conc": c.conc = !c.conc; if (!c.conc) delete c._avisoConc; break;
+    case "ok-aviso": delete c._avisoConc; break;
+    case "muerte": {
+      const k = t.dataset.t, i = +t.dataset.i;
+      c.muerte[k] = c.muerte[k] === i + 1 ? i : i + 1; break;
+    }
+    case "ver-cond": abrirCond(id); return;
+    case "toggle-cond": {
+      const x = E.combate.lista.find(y => y.id === condObjetivo);
+      x.condiciones[t.dataset.c] = !x.condiciones[t.dataset.c]; abrirCond(condObjetivo); break;
+    }
+    case "agot": {
+      const x = E.combate.lista.find(y => y.id === condObjetivo);
+      x.agot = Math.max(0, Math.min(6, x.agot + num(t.dataset.d)));
+      if (x.agot === 6) toast(`${x.nombre} llega a Agotamiento 6: muere.`);
+      abrirCond(condObjetivo); break;
+    }
+    case "slot": {
+      const p = E.grupo[t.dataset.pj]; const s = p?.espacios?.[t.dataset.n]; if (!s) break;
+      // tocar un espacio libre lo gasta; tocar uno gastado lo recupera
+      const libre = +t.dataset.i < s.max - s.usados;
+      s.usados = Math.max(0, Math.min(s.max, s.usados + (libre ? 1 : -1))); break;
+    }
+    case "nuevo-pj": abrirPJ(null); return;
+    case "editar-pj": abrirPJ(t.dataset.pj); return;
+    case "guardar-pj": guardarPJ(); return;
+    case "borrar-pj":
+      if (!confirm("¿Borrar este personaje?")) return;
+      delete E.grupo[t.dataset.pj]; E.combate.lista = E.combate.lista.filter(x => x.ref !== t.dataset.pj); break;
+    case "descanso-largo": descansoLargo(E.grupo[t.dataset.pj]); toast("Descanso largo aplicado."); break;
+    case "descanso-largo-todos": Object.values(E.grupo).forEach(descansoLargo); toast("Descanso largo para todo el grupo."); break;
+    case "tirar-expr": tirarExpresion($("#expr").value); return;
+    case "limpiar-hist": E.historial = []; $("#res").textContent = "—"; $("#res-det").textContent = ""; break;
+    case "exportar": {
+      const blob = new Blob([JSON.stringify(E, null, 2)], { type: "application/json" });
+      const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+      a.download = `mesa-dnd-respaldo-${new Date().toISOString().slice(0, 10)}.json`; a.click(); return;
+    }
+    case "importar": $("#archivo").click(); return;
+    case "borrar-todo":
+      if (!confirm("¿Borrar TODO (grupo, combate e historial)? No se puede deshacer.")) return;
+      E = nuevoEstado(); break;
+  }
+  render();
+});
+document.addEventListener("change", e => {
+  const t = e.target;
+  if (t.dataset.campo === "ini") {
+    const c = E.combate.lista.find(x => x.id === t.dataset.id);
+    if (c) { c.ini = t.value === "" ? null : num(t.value); guardar(); }
+  }
+});
+$("#expr").addEventListener("keydown", e => { if (e.key === "Enter") tirarExpresion(e.target.value); });
+$("#archivo").addEventListener("change", async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const datos = JSON.parse(await f.text());
+    if (!datos.grupo || !datos.combate) throw new Error();
+    E = datos; render(); toast("Respaldo importado.");
+  } catch { toast("Ese archivo no es un respaldo válido."); }
+  e.target.value = "";
+});
+
+renderCondRef();
+render();
+</script>
+</body>
+</html>
