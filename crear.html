@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Crea tu personaje — Mesa D&D</title>
+<style>
+  :root { --bg:#15121a; --card:#211c27; --card2:#2a2431; --line:#352d3e; --txt:#ede7f3; --mut:#a296b0; --acc:#d4a94e; --acc2:#8f6fd1; --ok:#5fbf7a; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { margin:0; background:var(--bg); color:var(--txt); font-family:system-ui,-apple-system,"Segoe UI",sans-serif; }
+  main { max-width:720px; margin:0 auto; padding:14px 14px 90px; }
+  .top { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+  .top h1 { font-size:1.1rem; margin:0; flex:1; }
+  .prog { height:5px; background:var(--card2); border-radius:4px; overflow:hidden; margin-bottom:16px; }
+  .prog i { display:block; height:100%; background:var(--acc); transition:width .3s; }
+  h2 { font-size:1.25rem; margin:6px 0 4px; }
+  p.ayuda { color:var(--mut); margin:0 0 14px; font-size:.95rem; line-height:1.45; }
+  .opciones { display:grid; gap:10px; }
+  .op { background:var(--card); border:2px solid var(--line); border-radius:12px; padding:12px 14px; cursor:pointer; text-align:left; color:var(--txt); font:inherit; width:100%; }
+  .op.sel { border-color:var(--acc); background:#2b2416; }
+  .op .t { font-weight:700; font-size:1.02rem; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .op .d { color:#cfc6da; font-size:.9rem; margin-top:4px; line-height:1.4; }
+  .op .m { color:var(--mut); font-size:.8rem; margin-top:6px; }
+  .tag { font-size:.68rem; padding:2px 7px; border-radius:20px; font-weight:700; background:var(--card2); color:var(--mut); }
+  .tag.facil { background:#1f3a29; color:#8fe0a7; } .tag.media { background:#3a3220; color:#f0cf7a; } .tag.alta { background:#3a2026; color:#f08f9b; }
+  .tag.rec { background:var(--acc); color:#1b1408; }
+  .grande { display:grid; gap:12px; }
+  .grande .op { padding:20px; } .grande .op .t { font-size:1.2rem; }
+  .barra-nav { position:fixed; bottom:0; left:0; right:0; background:#1b1720; border-top:1px solid var(--line); padding:10px 14px calc(10px + env(safe-area-inset-bottom)); display:flex; gap:10px; justify-content:center; }
+  .barra-nav > div { max-width:720px; width:100%; display:flex; gap:10px; }
+  button.b { background:var(--card2); color:var(--txt); border:1px solid var(--line); border-radius:10px; padding:12px 16px; font-size:1rem; cursor:pointer; font-family:inherit; }
+  button.p { background:var(--acc); color:#1b1408; border-color:var(--acc); font-weight:700; flex:1; }
+  button.p:disabled { opacity:.4; }
+  button.s { padding:8px 12px; font-size:.88rem; }
+  .check { display:flex; align-items:center; gap:10px; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px 12px; cursor:pointer; }
+  .check.sel { border-color:var(--acc2); background:#2a2340; }
+  .check.fija { opacity:.75; cursor:default; }
+  .check input { width:20px; height:20px; accent-color:var(--acc2); }
+  .check small { color:var(--mut); margin-left:auto; }
+  .lista-checks { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:8px; }
+  .contador { color:var(--acc); font-weight:700; margin-bottom:10px; }
+  label.f { display:flex; flex-direction:column; gap:4px; font-size:.85rem; color:var(--mut); margin-bottom:12px; }
+  input.t, select { background:#120f16; color:var(--txt); border:1px solid var(--line); border-radius:9px; padding:10px; font-size:16px; font-family:inherit; width:100%; }
+  .fila { display:flex; gap:8px; align-items:flex-end; } .fila > label { flex:1; margin-bottom:0; }
+  .sub { margin-top:12px; padding:12px; background:var(--card2); border-radius:10px; }
+  .sub h3 { margin:0 0 8px; font-size:.95rem; color:var(--acc); }
+
+  /* Ficha */
+  .ficha { background:#fbf8f2; color:#1d1a16; border-radius:12px; padding:18px; font-size:.92rem; }
+  .ficha h2 { color:#1d1a16; margin:0; font-size:1.5rem; }
+  .ficha .sub2 { color:#6b6157; margin:2px 0 12px; }
+  .ficha h3 { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8a5a12; margin:16px 0 6px; border-bottom:1px solid #e3d9c8; padding-bottom:3px; }
+  .cars { display:grid; grid-template-columns:repeat(6,1fr); gap:6px; }
+  .car { border:1.5px solid #cbbfa9; border-radius:10px; text-align:center; padding:6px 2px; }
+  .car .n { font-size:.68rem; font-weight:700; color:#6b6157; }
+  .car .mod { font-size:1.35rem; font-weight:800; }
+  .car .v { font-size:.75rem; color:#6b6157; }
+  .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+  .st { border:1.5px solid #cbbfa9; border-radius:10px; text-align:center; padding:6px 2px; }
+  .st b { display:block; font-size:1.25rem; } .st span { font-size:.68rem; color:#6b6157; font-weight:700; }
+  .dos { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .ficha ul { margin:0; padding-left:18px; } .ficha li { margin:3px 0; line-height:1.35; }
+  .hab { display:grid; grid-template-columns:1fr auto; gap:1px 8px; font-size:.85rem; }
+  .hab .c { font-weight:700; } .hab .no { color:#8b8178; }
+  table.armas { width:100%; border-collapse:collapse; font-size:.85rem; }
+  table.armas th { text-align:left; font-size:.7rem; color:#6b6157; } table.armas td { padding:3px 2px; border-top:1px solid #eee4d3; }
+  .nota { font-size:.78rem; color:#6b6157; margin-top:12px; }
+  .acciones { display:flex; flex-wrap:wrap; gap:8px; margin:14px 0; }
+  @media (max-width:520px) { .cars { grid-template-columns:repeat(3,1fr); } .dos { grid-template-columns:1fr; } }
+  @media print {
+    body, html { background:#fff; } .no-print, .barra-nav, .top, .prog { display:none !important; }
+    main { padding:0; max-width:none; } .ficha { border-radius:0; padding:0; font-size:10.5pt; }
+    .cars { grid-template-columns:repeat(6,1fr); } .dos { grid-template-columns:1fr 1fr; }
+  }
+  .toast { position:fixed; left:50%; bottom:90px; transform:translateX(-50%); background:var(--card2); border:1px solid var(--acc); padding:10px 16px; border-radius:10px; opacity:0; transition:opacity .2s; pointer-events:none; z-index:9; }
+  .toast.on { opacity:1; }
+</style>
+</head>
+<body>
+<main>
+  <div class="top"><h1>🧙 Crea tu personaje</h1><span id="paso-txt" style="color:var(--mut);font-size:.85rem"></span></div>
+  <div class="prog"><i id="prog"></i></div>
+  <div id="vista"></div>
+</main>
+<div class="barra-nav no-print" id="nav"><div>
+  <button class="b" id="atras">← Atrás</button>
+  <button class="b p" id="sig">Siguiente →</button>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* =====================================================================
+   DATOS — SRD 5.2.1 (Wizards of the Coast, CC-BY-4.0). Traducción propia.
+   ===================================================================== */
+const CAR = ["FUE","DES","CON","INT","SAB","CAR"];
+const CAR_N = { FUE:"Fuerza", DES:"Destreza", CON:"Constitución", INT:"Inteligencia", SAB:"Sabiduría", CAR:"Carisma" };
+const HAB = { "Acrobacias":"DES","Arcanos":"INT","Atletismo":"FUE","Engaño":"CAR","Historia":"INT","Interpretación":"CAR",
+  "Intimidación":"CAR","Investigación":"INT","Juego de manos":"DES","Medicina":"SAB","Naturaleza":"INT","Percepción":"SAB",
+  "Perspicacia":"SAB","Persuasión":"CAR","Religión":"INT","Sigilo":"DES","Supervivencia":"SAB","Trato con animales":"SAB" };
+const TODAS = Object.keys(HAB);
+
+// Armas: [nombre, daño, tipo, propiedad: "sutil" | "dist" | "arroj" | ""]
+const A = {
+  granhacha:["Gran hacha","1d12","cortante",""], hachamano:["Hacha de mano","1d6","cortante","arroj"],
+  daga:["Daga","1d4","perforante","sutil"], maza:["Maza","1d6","contundente",""], hoz:["Hoz","1d4","cortante",""],
+  baston:["Bastón","1d6","contundente",""], espadon:["Espadón","2d6","cortante",""], mayal:["Mayal","1d8","contundente",""],
+  jabalina:["Jabalina","1d6","perforante","arroj"], cimitarra:["Cimitarra","1d6","cortante","sutil"],
+  espadacorta:["Espada corta","1d6","perforante","sutil"], arcolargo:["Arco largo","1d8","perforante","dist"],
+  arcocorto:["Arco corto","1d6","perforante","dist"], lanza:["Lanza","1d6","perforante",""], espadalarga:["Espada larga","1d8","cortante",""],
+};
+
+const CLASES = {
+  barbaro: { n:"Bárbaro", ico:"🪓", dg:12, comp:"facil", salv:["FUE","CON"], hab:[2,["Trato con animales","Atletismo","Intimidación","Naturaleza","Percepción","Supervivencia"]],
+    arr:[15,13,14,10,12,8], bg:"soldado", inc:{FUE:2,CON:1},
+    d:"Un guerrero feroz que entra en furia y aguanta golpes que tumbarían a cualquiera.", gusta:"te gusta ir al frente y pegar fuerte",
+    eq:{ A:{ txt:"Gran hacha, 4 hachas de mano, paquete de explorador y 15 po", armas:["granhacha","hachamano"], ca:c=>10+c.DES+c.CON } },
+    rasgos:c=>["<b>Furia</b> (2 usos; acción adicional): +2 al daño con ataques de Fuerza, resistencia al daño contundente, cortante y perforante, y ventaja en pruebas y salvaciones de Fuerza. Recuperas 1 uso con descanso corto y todos con descanso largo.",
+      "<b>Defensa sin armadura</b>: sin armadura, tu CA es 10 + DES + CON (puedes usar escudo).",
+      "<b>Maestría con armas</b>: usas la propiedad de maestría de 2 tipos de armas cuerpo a cuerpo."] },
+  bardo: { n:"Bardo", ico:"🎻", dg:8, comp:"media", salv:["DES","CAR"], hab:[3,TODAS], arr:[8,14,12,13,10,15], bg:"acolito", inc:{CAR:2,INT:1},
+    d:"Artista con magia: inspira a sus aliados, encanta a la gente y sabe un poco de todo.", gusta:"te gusta hablar, apoyar al grupo y lucirte",
+    eq:{ A:{ txt:"Armadura de cuero, 2 dagas, un instrumento musical, paquete de artista y 19 po", armas:["daga"], ca:c=>11+c.DES } },
+    magia:{ car:"CAR", trucos:2, prep:4, esp:"2 de nivel 1" },
+    rasgos:c=>[`<b>Inspiración bárdica</b> (acción adicional): das a un aliado un d6 que puede sumar a una tirada d20 fallida. Usos: ${Math.max(1,c.CAR)} por descanso largo.`,
+      "<b>Lanzamiento de conjuros</b> (Carisma): 2 trucos y 4 conjuros preparados de la lista de bardo."] },
+  clerigo: { n:"Clérigo", ico:"✨", dg:8, comp:"media", salv:["SAB","CAR"], hab:[2,["Historia","Perspicacia","Medicina","Persuasión","Religión"]],
+    arr:[14,8,13,10,15,12], bg:"acolito", inc:{SAB:2,CAR:1},
+    d:"Elegido de un dios: cura, protege y castiga con poder divino. El corazón del grupo.", gusta:"te gusta cuidar a los demás",
+    eq:{ A:{ txt:"Camisote de mallas, escudo, maza, símbolo sagrado, paquete de sacerdote y 7 po", armas:["maza"], ca:c=>13+Math.min(2,c.DES)+2 } },
+    magia:{ car:"SAB", trucos:3, prep:4, esp:"2 de nivel 1" },
+    rasgos:c=>["<b>Lanzamiento de conjuros</b> (Sabiduría): 3 trucos y 4 conjuros preparados de la lista de clérigo.",
+      "<b>Orden divina</b>: elige <i>Protector</i> (armas marciales y armadura pesada) o <i>Taumaturgo</i> (un truco extra y bono a Arcanos y Religión)."] },
+  druida: { n:"Druida", ico:"🌿", dg:8, comp:"alta", salv:["INT","SAB"], hab:[2,["Trato con animales","Arcanos","Perspicacia","Medicina","Naturaleza","Percepción","Religión","Supervivencia"]],
+    arr:[8,12,14,13,15,10], bg:"sabio", inc:{SAB:2,CON:1},
+    d:"Guardián de la naturaleza con magia de plantas, animales y elementos.", gusta:"te gusta la naturaleza y tener muchas opciones",
+    eq:{ A:{ txt:"Armadura de cuero, escudo, hoz, foco druídico (bastón), paquete de explorador, útiles de herborista y 9 po", armas:["hoz","baston"], ca:c=>11+c.DES+2 } },
+    magia:{ car:"SAB", trucos:2, prep:4, esp:"2 de nivel 1" },
+    rasgos:c=>["<b>Druídico</b>: conoces el idioma secreto de los druidas y siempre tienes preparado <i>Hablar con los animales</i>.",
+      "<b>Orden primigenia</b>: elige <i>Mago</i> (un truco extra y bono a Arcanos y Naturaleza) o <i>Guardián</i> (armas marciales y armadura media).",
+      "<b>Lanzamiento de conjuros</b> (Sabiduría): 2 trucos y 4 conjuros preparados de la lista de druida."] },
+  guerrero: { n:"Guerrero", ico:"⚔️", dg:10, comp:"facil", salv:["FUE","CON"], hab:[2,["Acrobacias","Trato con animales","Atletismo","Historia","Perspicacia","Intimidación","Persuasión","Percepción","Supervivencia"]],
+    arr:[15,14,13,8,10,12], bg:"soldado", inc:{FUE:2,CON:1},
+    d:"Experto en armas y armaduras. Sencillo de jugar y muy resistente.", gusta:"quieres algo directo y sólido",
+    eq:{ A:{ txt:"Cota de mallas, espadón, mayal, 8 jabalinas, paquete de explorador de mazmorras y 4 po", armas:["espadon","mayal","jabalina"], ca:c=>16, estilo:"armas a dos manos" },
+         B:{ txt:"Armadura de cuero tachonado, cimitarra, espada corta, arco largo, 20 flechas, carcaj, paquete de explorador de mazmorras y 11 po", armas:["arcolargo","cimitarra","espadacorta"], ca:c=>12+c.DES, estilo:"arquería" } },
+    rasgos:c=>[`<b>Estilo de combate</b>: ${c._eq.estilo === "arquería" ? "<i>Arquería</i>: +2 a las tiradas de ataque con armas a distancia (ya incluido)." : "<i>Combate con armas a dos manos</i>: al tirar daño con un arma a dos manos, trata los 1 y 2 como 3."}`,
+      "<b>Nuevas fuerzas</b> (acción adicional): recuperas 1d10 + tu nivel de PG. 2 usos.",
+      "<b>Maestría con armas</b>: usas la propiedad de maestría de 3 tipos de armas."] },
+  monje: { n:"Monje", ico:"👊", dg:8, comp:"media", salv:["FUE","DES"], hab:[2,["Acrobacias","Atletismo","Historia","Perspicacia","Religión","Sigilo"]],
+    arr:[12,15,13,10,14,8], bg:"criminal", inc:{DES:2,CON:1},
+    d:"Artista marcial veloz que pelea con puños y patadas.", gusta:"te gusta moverte rápido y golpear muchas veces",
+    eq:{ A:{ txt:"Lanza, 5 dagas, herramientas de artesano o instrumento musical, paquete de explorador y 11 po", armas:["lanza","daga"], ca:c=>10+c.DES+c.SAB, monje:true } },
+    rasgos:c=>["<b>Artes marciales</b>: puedes hacer un golpe sin armas como acción adicional; tu dado de artes marciales es d6 y usas Destreza para golpes sin armas y armas de monje.",
+      "<b>Defensa sin armadura</b>: sin armadura ni escudo, tu CA es 10 + DES + SAB."] },
+  paladin: { n:"Paladín", ico:"🛡️", dg:10, comp:"media", salv:["SAB","CAR"], hab:[2,["Atletismo","Perspicacia","Intimidación","Medicina","Persuasión","Religión"]],
+    arr:[15,10,13,8,12,14], bg:"soldado", inc:{FUE:2,CON:1},
+    d:"Caballero sagrado con un juramento: pelea en primera fila y también cura.", gusta:"quieres ser el héroe protector",
+    eq:{ A:{ txt:"Cota de mallas, escudo, espada larga, 6 jabalinas, símbolo sagrado, paquete de sacerdote y 9 po", armas:["espadalarga","jabalina"], ca:c=>16+2 } },
+    magia:{ car:"CAR", trucos:0, prep:2, esp:"2 de nivel 1" },
+    rasgos:c=>["<b>Imposición de manos</b> (acción adicional): reserva de 5 PG para curar (5 × nivel).",
+      "<b>Lanzamiento de conjuros</b> (Carisma): 2 conjuros preparados de la lista de paladín.",
+      "<b>Maestría con armas</b>: usas la propiedad de maestría de 2 tipos de armas."] },
+  explorador: { n:"Explorador", ico:"🏹", dg:10, comp:"media", salv:["FUE","DES"], hab:[3,["Trato con animales","Atletismo","Perspicacia","Investigación","Naturaleza","Percepción","Sigilo","Supervivencia"]],
+    arr:[12,15,13,8,14,10], bg:"soldado", inc:{DES:2,CON:1},
+    d:"Cazador y rastreador experto en la naturaleza, letal con el arco.", gusta:"te gusta atacar a distancia y explorar",
+    eq:{ A:{ txt:"Armadura de cuero tachonado, cimitarra, espada corta, arco largo, 20 flechas, carcaj, foco druídico (muérdago), paquete de explorador y 7 po", armas:["arcolargo","cimitarra","espadacorta"], ca:c=>12+c.DES } },
+    magia:{ car:"SAB", trucos:0, prep:2, esp:"2 de nivel 1" },
+    rasgos:c=>["<b>Enemigo predilecto</b>: siempre tienes preparado <i>Marca del cazador</i> y puedes lanzarlo 2 veces sin gastar espacio por descanso largo.",
+      "<b>Lanzamiento de conjuros</b> (Sabiduría): 2 conjuros preparados de la lista de explorador.",
+      "<b>Maestría con armas</b>: usas la propiedad de maestría de 2 tipos de armas."] },
+  picaro: { n:"Pícaro", ico:"🗡️", dg:8, comp:"facil", salv:["DES","INT"], hab:[4,["Acrobacias","Atletismo","Engaño","Perspicacia","Intimidación","Investigación","Percepción","Persuasión","Juego de manos","Sigilo"]],
+    arr:[12,15,13,14,10,8], bg:"criminal", inc:{DES:2,CON:1},
+    d:"Sigiloso y astuto: abre cerraduras, desactiva trampas y golpea donde más duele.", gusta:"te gusta ser sigiloso y listo",
+    eq:{ A:{ txt:"Armadura de cuero, 2 dagas, espada corta, arco corto, 20 flechas, carcaj, herramientas de ladrón, paquete de ladrón y 8 po", armas:["espadacorta","arcocorto","daga"], ca:c=>11+c.DES } },
+    rasgos:c=>["<b>Ataque furtivo</b>: una vez por turno, +1d6 de daño con un arma sutil o a distancia si tienes ventaja o un aliado está a 5 pies del objetivo.",
+      "<b>Pericia</b>: elige 2 de tus habilidades; tu bono de competencia se duplica en ellas.",
+      "<b>Jerga de ladrones</b>: conoces el lenguaje secreto de los ladrones y un idioma más.",
+      "<b>Maestría con armas</b>: usas la propiedad de maestría de 2 tipos de armas."] },
+  hechicero: { n:"Hechicero", ico:"🔥", dg:6, comp:"alta", salv:["CON","CAR"], hab:[2,["Arcanos","Engaño","Perspicacia","Intimidación","Persuasión","Religión"]],
+    arr:[10,13,14,8,12,15], bg:"acolito", inc:{CAR:2,SAB:1},
+    d:"La magia corre por su sangre: pocos conjuros, pero muy potentes.", gusta:"quieres lanzar magia explosiva",
+    eq:{ A:{ txt:"Lanza, 2 dagas, foco arcano (cristal), paquete de explorador de mazmorras y 28 po", armas:["lanza","daga"], ca:c=>10+c.DES } },
+    magia:{ car:"CAR", trucos:4, prep:2, esp:"2 de nivel 1" },
+    rasgos:c=>["<b>Lanzamiento de conjuros</b> (Carisma): 4 trucos y 2 conjuros preparados de la lista de hechicero.",
+      "<b>Hechicería innata</b> (acción adicional, 1 minuto): +1 a la CD de tus conjuros y ventaja en tus ataques de conjuro. 2 veces por descanso largo."] },
+  brujo: { n:"Brujo", ico:"👁️", dg:8, comp:"alta", salv:["SAB","CAR"], hab:[2,["Arcanos","Engaño","Historia","Intimidación","Investigación","Naturaleza","Religión"]],
+    arr:[8,14,13,12,10,15], bg:"acolito", inc:{CAR:2,INT:1},
+    d:"Hizo un pacto con un ser poderoso a cambio de magia. Misterioso y versátil.", gusta:"te atrae una historia oscura",
+    eq:{ A:{ txt:"Armadura de cuero, hoz, 2 dagas, foco arcano (orbe), libro de saber oculto, paquete de erudito y 15 po", armas:["hoz","daga"], ca:c=>11+c.DES } },
+    magia:{ car:"CAR", trucos:2, prep:2, esp:"1 de nivel 1 (vuelve con descanso corto)" },
+    rasgos:c=>["<b>Invocaciones sobrenaturales</b>: elige 1 invocación.",
+      "<b>Magia de pacto</b> (Carisma): 2 trucos y 2 conjuros preparados de la lista de brujo. Tu espacio de conjuro se recupera con descanso corto."] },
+  mago: { n:"Mago", ico:"📜", dg:6, comp:"alta", salv:["INT","SAB"], hab:[2,["Arcanos","Historia","Perspicacia","Investigación","Medicina","Naturaleza","Religión"]],
+    arr:[8,12,13,15,14,10], bg:"sabio", inc:{INT:2,CON:1},
+    d:"Estudioso de la magia arcana con el libro de conjuros más grande del grupo.", gusta:"te gusta resolver problemas con ingenio",
+    eq:{ A:{ txt:"2 dagas, foco arcano (bastón), túnica, libro de conjuros, paquete de erudito y 5 po", armas:["daga","baston"], ca:c=>10+c.DES } },
+    magia:{ car:"INT", trucos:3, prep:4, esp:"2 de nivel 1" },
+    rasgos:c=>["<b>Lanzamiento de conjuros</b> (Inteligencia): 3 trucos y 4 conjuros preparados. Tu libro empieza con 6 conjuros de nivel 1.",
+      "<b>Ritualista</b>: lanzas como ritual los conjuros con esa etiqueta de tu libro sin prepararlos.",
+      "<b>Recuperación arcana</b>: una vez por descanso largo, al terminar un descanso corto recuperas espacios de conjuro (nivel total 1)."] },
+};
+
+const TRASFONDOS = {
+  acolito:  { n:"Acólito", cars:["INT","SAB","CAR"], hab:["Perspicacia","Religión"], herr:"Útiles de caligrafía",
+    dote:"<b>Iniciado en la magia (Clérigo)</b>: 2 trucos y 1 conjuro de nivel 1 de clérigo; ese conjuro lo lanzas gratis 1 vez por descanso largo.",
+    d:"Serviste en un templo. Conoces los ritos y las escrituras de tu fe." },
+  criminal: { n:"Criminal", cars:["DES","CON","INT"], hab:["Juego de manos","Sigilo"], herr:"Herramientas de ladrón",
+    dote:"<b>Alerta</b>: sumas tu bono de competencia a la iniciativa (ya incluido) y puedes intercambiar tu iniciativa con un aliado.",
+    d:"Vivías al margen de la ley: robos, contrabando o algo peor." },
+  sabio:    { n:"Sabio", cars:["CON","INT","SAB"], hab:["Arcanos","Historia"], herr:"Útiles de caligrafía",
+    dote:"<b>Iniciado en la magia (Mago)</b>: 2 trucos y 1 conjuro de nivel 1 de mago; ese conjuro lo lanzas gratis 1 vez por descanso largo.",
+    d:"Pasaste años entre libros y pergaminos buscando conocimiento." },
+  soldado:  { n:"Soldado", cars:["FUE","DES","CON"], hab:["Atletismo","Intimidación"], herr:"Un juego de mesa",
+    dote:"<b>Atacante salvaje</b>: una vez por turno, al impactar con un arma, tira el daño dos veces y quédate con el mayor.",
+    d:"Serviste en un ejército o milicia. Sabes pelear en formación y obedecer órdenes." },
+};
+
+const ESPECIES = {
+  draconido: { n:"Dracónido", vel:30, d:"Descendiente de dragones, con escamas y aliento elemental.",
+    sub:{ t:"Ancestro dracónico", ops:{ "Negro o Cobre":"ácido", "Azul o Bronce":"relámpago", "Latón, Oro o Rojo":"fuego", "Verde":"veneno", "Plata o Blanco":"frío" } },
+    rasgos:s=>[`<b>Arma de aliento</b>: sustituye un ataque por un cono de 15 pies o una línea de 30×5 pies. Salvación de DES (CD 8 + CON + competencia) o 1d10 de daño de ${s}, la mitad si supera. Usos: tu bono de competencia por descanso largo.`,
+      `<b>Resistencia</b> al daño de ${s}.`, "<b>Visión en la oscuridad</b> 60 pies."] },
+  enano: { n:"Enano", vel:30, d:"Recio y testarudo, hijo de la piedra y la forja.", pgExtra:1,
+    rasgos:()=>["<b>Visión en la oscuridad</b> 120 pies.", "<b>Resiliencia enana</b>: resistencia al daño de veneno y ventaja en salvaciones contra el estado Envenenado.",
+      "<b>Dureza enana</b>: +1 PG máximo por nivel (ya incluido).", "<b>Afinidad con la piedra</b> (acción adicional): sentido de la vibración 60 pies durante 10 minutos sobre piedra. Usos: tu bono de competencia por descanso largo."] },
+  elfo: { n:"Elfo", vel:30, d:"Gracioso y longevo, con sentidos agudos y un toque de magia feérica.",
+    sub:{ t:"Linaje élfico", ops:{ "Drow":"Visión en la oscuridad 120 pies y conoces el truco <i>Luces danzantes</i>.", "Alto elfo":"Conoces el truco <i>Prestidigitación</i> (puedes cambiarlo por otro truco de mago tras un descanso largo).", "Elfo de los bosques":"Tu velocidad es 35 pies y conoces el truco <i>Druidismo</i>." } },
+    habExtra:{ n:1, de:["Perspicacia","Percepción","Supervivencia"], t:"Sentidos agudos" },
+    rasgos:s=>[`<b>Linaje</b>: ${s}`, "<b>Visión en la oscuridad</b> 60 pies.", "<b>Ascendencia feérica</b>: ventaja en salvaciones contra el estado Hechizado.", "<b>Trance</b>: no duermes; tu descanso largo dura 4 horas de meditación."] },
+  gnomo: { n:"Gnomo", vel:30, d:"Pequeño, curioso e ingenioso, con un don para la magia y los inventos.",
+    sub:{ t:"Linaje gnómico", ops:{ "Gnomo de los bosques":"Conoces el truco <i>Ilusión menor</i> y siempre tienes preparado <i>Hablar con los animales</i>.", "Gnomo de las rocas":"Conoces los trucos <i>Remendar</i> y <i>Prestidigitación</i>, y puedes construir pequeños aparatos mecánicos." } },
+    rasgos:s=>[`<b>Linaje</b>: ${s}`, "<b>Visión en la oscuridad</b> 60 pies.", "<b>Astucia gnómica</b>: ventaja en salvaciones de INT, SAB y CAR."] },
+  goliat: { n:"Goliat", vel:35, d:"Gigante entre la gente, descendiente de los auténticos gigantes.",
+    sub:{ t:"Ancestro gigante", ops:{ "De las nubes":"Acción adicional: te teletransportas 30 pies.", "Del fuego":"Al impactar, +1d10 de daño de fuego.", "De la escarcha":"Al impactar, +1d6 de daño de frío y el objetivo pierde 10 pies de velocidad.", "De las colinas":"Al impactar a un objetivo Grande o menor, lo derribas.", "De la piedra":"Reacción al recibir daño: lo reduces en 1d12 + CON.", "De la tormenta":"Reacción al recibir daño de alguien a 60 pies: le haces 1d8 de daño de trueno." } },
+    rasgos:s=>[`<b>Ancestro gigante</b> (usos: tu bono de competencia por descanso largo): ${s}`, "<b>Complexión poderosa</b>: ventaja en pruebas para librarte de un agarre y cargas como si fueras una talla más grande."] },
+  mediano: { n:"Mediano", vel:30, d:"Pequeño, valiente y con una suerte asombrosa.",
+    rasgos:()=>["<b>Suerte</b>: si sacas 1 natural en una tirada d20, repítela.", "<b>Valiente</b>: ventaja en salvaciones contra el estado Asustado.", "<b>Agilidad mediana</b>: puedes atravesar el espacio de criaturas más grandes.", "<b>Sigilo natural</b>: puedes esconderte tras una criatura más grande que tú."] },
+  humano: { n:"Humano", vel:30, d:"Versátil y ambicioso; se adapta a cualquier cosa.",
+    habExtra:{ n:1, de:TODAS, t:"Hábil" },
+    rasgos:()=>["<b>Ingenioso</b>: ganas Inspiración heroica cada vez que terminas un descanso largo.", "<b>Hábil</b>: competencia en una habilidad extra (ya incluida).", "<b>Versátil</b>: ganas una dote de origen extra (se recomienda <i>Habilidoso</i>; elígela con tu DM)."] },
+  orco: { n:"Orco", vel:30, d:"Fuerte e incansable, sigue en pie cuando otros caen.",
+    rasgos:()=>["<b>Subidón de adrenalina</b>: acción adicional para Correr y ganar PG temporales igual a tu bono de competencia. Usos: tu bono de competencia por descanso corto o largo.", "<b>Visión en la oscuridad</b> 120 pies.", "<b>Aguante implacable</b>: una vez por descanso largo, si caes a 0 PG te quedas en 1."] },
+  tiflin: { n:"Tiflin", vel:30, d:"Con sangre de los planos inferiores: cuernos, cola y magia infernal.",
+    sub:{ t:"Legado infernal", ops:{ "Abisal":"Resistencia al veneno; conoces el truco <i>Rociada venenosa</i>.", "Ctónico":"Resistencia al daño necrótico; conoces el truco <i>Toque gélido</i>.", "Infernal":"Resistencia al fuego; conoces el truco <i>Descarga de fuego</i>." } },
+    rasgos:s=>[`<b>Legado</b>: ${s}`, "<b>Visión en la oscuridad</b> 60 pies.", "<b>Presencia sobrenatural</b>: conoces el truco <i>Taumaturgia</i>."] },
+};
+
+const NOMBRES = ["Aldric","Mira","Thorn","Ysolde","Brann","Kessa","Oren","Vexa","Dorian","Sable","Tamsin","Grull","Lirien","Bodo","Nyx","Hilda","Corvin","Fenna","Rurik","Zaya"];
+const APODOS = ["el Callado","Mano Rápida","el Último","Ojos de Ceniza","Rompepiedras","la Que Vuelve","Medio Santo","Sin Sombra","el Prestado","Dos Monedas","Cantaruinas","el Amable"];
+const MOTIVOS = ["Debes dinero a alguien peligroso.","Buscas a un familiar desaparecido.","Una profecía (probablemente falsa) habla de ti.","Quieres fama: que canten tu nombre en las tabernas.","Huyes de algo que hiciste.","Pagas una deuda de honor con tu espada.","Te aburría tu vida y esto suena mejor.","Alguien te pagó por adelantado… y ya te lo gastaste."];
+const RASGOS_P = ["Hablas demasiado cuando estás nervioso.","Coleccionas algo raro (dientes, llaves, botones).","Desconfías de cualquiera que sea amable contigo.","Siempre tienes hambre.","Rezas antes de cada pelea, aunque no sepas bien a quién.","Exageras tus hazañas.","No puedes dejar una puerta cerrada sin abrirla.","Defiendes a los débiles aunque te cueste caro.","Le pones nombre a tus armas y les hablas.","Odias mojarte."];
+const APARIENCIAS = ["Una cicatriz que nunca explicas igual dos veces.","Ropa demasiado elegante para un aventurero.","Un tatuaje de un símbolo que no reconoces.","Ojos de colores distintos.","Siempre llevas un sombrero ridículo.","Joyas baratas por todas partes.","Una mascota pequeña en el hombro o el bolsillo.","Te falta un diente y silbas al hablar."];
+
+/* ============================ ESTADO ============================ */
+const al = arr => arr[Math.floor(Math.random() * arr.length)];
+const mod = v => Math.floor((v - 10) / 2);
+const fmt = n => (n >= 0 ? "+" : "") + n;
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let P = {};      // personaje en construcción
+let paso = 0;
+const PASOS = ["inicio","clase","especie","trasfondo","habilidades","equipo","detalles","ficha"];
+
+function incrementos(clase, bg) {
+  const C = CLASES[clase];
+  if (bg === C.bg) return { ...C.inc };
+  // Regla general: +2 a la característica más alta de las del trasfondo; +1 a otra (preferimos una impar, que sube el modificador).
+  const base = Object.fromEntries(CAR.map((k, i) => [k, C.arr[i]]));
+  const ops = [...TRASFONDOS[bg].cars].sort((a, b) => base[b] - base[a]);
+  const inc = { [ops[0]]: 2 };
+  const resto = ops.slice(1).sort((a, b) => (base[b] % 2) - (base[a] % 2) || base[b] - base[a]);
+  inc[resto[0]] = 1;
+  return inc;
+}
+function calcular() {
+  const C = CLASES[P.clase], B = TRASFONDOS[P.bg], S = ESPECIES[P.especie];
+  const inc = incrementos(P.clase, P.bg);
+  const val = {}, m = {};
+  CAR.forEach((k, i) => { val[k] = C.arr[i] + (inc[k] || 0); m[k] = mod(val[k]); });
+  const eqKey = (C.eq[P.opEq] ? P.opEq : "A");
+  const eq = C.eq[eqKey];
+  const ctx = { ...m, _eq: eq };
+  const pb = 2;
+  const habs = new Set([...B.hab, ...P.habs, ...(P.habExtra || [])]);
+  const subTxt = S.sub ? S.sub.ops[P.sub] : null;
+  const pg = C.dg + m.CON + (S.pgExtra || 0);
+  const ini = m.DES + (P.bg === "criminal" ? pb : 0);
+  const vel = (P.especie === "elfo" && P.sub === "Elfo de los bosques") ? 35 : S.vel;
+  const armas = eq.armas.map(k => {
+    const [n, dado, tipo, prop] = A[k];
+    let car = "FUE";
+    if (prop === "dist") car = "DES";
+    else if (prop === "sutil" || eq.monje) car = m.DES > m.FUE ? "DES" : "FUE";
+    let atq = pb + m[car];
+    if (prop === "dist" && eq.estilo === "arquería") atq += 2;
+    const extra = prop === "arroj" ? " (arrojadiza)" : prop === "dist" ? " (distancia)" : prop === "sutil" ? " (sutil)" : "";
+    return { n: n + extra, atq, dmg: `${dado}${m[car] ? fmt(m[car]) : ""} ${tipo}` };
+  });
+  if (eq.monje) armas.push({ n:"Golpe sin armas", atq: pb + Math.max(m.DES, m.FUE), dmg: `1d6${fmt(Math.max(m.DES, m.FUE))} contundente` });
+  const mag = C.magia ? { ...C.magia, cd: 8 + pb + m[C.magia.car], atq: pb + m[C.magia.car] } : null;
+  return { C, B, S, val, m, inc, eq, pb, habs, subTxt, pg, ini, vel, ca: eq.ca(ctx), armas, mag,
+           rasgos: [...C.rasgos(ctx), B.dote, ...S.rasgos(P.especie === "draconido" ? subTxt : subTxt)],
+           percPas: 10 + m.SAB + (habs.has("Percepción") ? pb : 0) };
+}
+
+/* ============================ ALEATORIO ============================ */
+function aleatorio() {
+  const clase = al(Object.keys(CLASES)), especie = al(Object.keys(ESPECIES));
+  const C = CLASES[clase], S = ESPECIES[especie];
+  P = { modo:"azar", clase, especie, bg:C.bg, opEq: C.eq.B && Math.random() < .5 ? "B" : "A",
+        sub: S.sub ? al(Object.keys(S.sub.ops)) : null };
+  const fijas = TRASFONDOS[P.bg].hab;
+  const libres = C.hab[1].filter(h => !fijas.includes(h));
+  P.habs = libres.sort(() => Math.random() - .5).slice(0, C.hab[0]);
+  if (S.habExtra) P.habExtra = [al(S.habExtra.de.filter(h => !fijas.includes(h) && !P.habs.includes(h)))];
+  P.nombre = `${al(NOMBRES)} ${al(APODOS)}`; P.jugador = P.jugador || "";
+  P.motivo = al(MOTIVOS); P.rasgo = al(RASGOS_P); P.apariencia = al(APARIENCIAS);
+}
+
+/* ============================ VISTAS ============================ */
+const $ = s => document.querySelector(s);
+function toast(t) { const el = $("#toast"); el.textContent = t; el.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("on"), 2400); }
+const COMP = { facil:["Fácil","facil"], media:["Media","media"], alta:["Compleja","alta"] };
+
+const VISTAS = {
+  inicio: () => `
+    <h2>¡Bienvenido, aventurero!</h2>
+    <p class="ayuda">En D&D interpretas a un héroe. Este asistente te ayuda a crearlo en unos minutos. No necesitas saber las reglas.</p>
+    <div class="grande">
+      <button class="op" data-ir="azar"><div class="t">🎲 Hazlo por mí</div><div class="d">Te armo un personaje completo al azar, listo para jugar. Si no te gusta, vuelves a tirar.</div></button>
+      <button class="op" data-ir="elegir"><div class="t">🧭 Quiero elegir</div><div class="d">Te explico cada opción en lenguaje sencillo y tú decides. Toma unos 10 minutos.</div></button>
+    </div>`,
+  clase: () => `
+    <h2>¿Qué tipo de héroe quieres ser?</h2>
+    <p class="ayuda">La clase es lo más importante: define cómo peleas y qué sabes hacer. Si es tu primera vez, las marcadas como <b>Fácil</b> son ideales.</p>
+    <div class="opciones">${Object.entries(CLASES).map(([k, c]) => `
+      <button class="op ${P.clase === k ? "sel" : ""}" data-set="clase" data-v="${k}">
+        <div class="t">${c.ico} ${c.n} <span class="tag ${COMP[c.comp][1]}">${COMP[c.comp][0]}</span></div>
+        <div class="d">${c.d}</div><div class="m">Elígelo si ${c.gusta}.</div></button>`).join("")}</div>`,
+  especie: () => {
+    const S = P.especie && ESPECIES[P.especie];
+    return `
+    <h2>¿De qué pueblo vienes?</h2>
+    <p class="ayuda">Tu especie te da habilidades especiales, como ver en la oscuridad o resistir venenos. Elige la que más te guste por su estilo; ninguna es mala.</p>
+    <div class="opciones">${Object.entries(ESPECIES).map(([k, s]) => `
+      <button class="op ${P.especie === k ? "sel" : ""}" data-set="especie" data-v="${k}">
+        <div class="t">${s.n}</div><div class="d">${s.d}</div></button>`).join("")}</div>
+    ${S && S.sub ? `<div class="sub"><h3>${S.sub.t}</h3><select id="sub">${Object.keys(S.sub.ops).map(o => `<option ${P.sub === o ? "selected" : ""}>${o}</option>`).join("")}</select>
+      <p class="ayuda" style="margin:8px 0 0" id="sub-d">${S.sub.ops[P.sub] || ""}</p></div>` : ""}`;
+  },
+  trasfondo: () => `
+    <h2>¿Qué hacías antes de ser aventurero?</h2>
+    <p class="ayuda">Tu trasfondo es tu pasado. Te da dos habilidades, una dote (un talento especial) y mejora tus características.</p>
+    <div class="opciones">${Object.entries(TRASFONDOS).map(([k, b]) => `
+      <button class="op ${P.bg === k ? "sel" : ""}" data-set="bg" data-v="${k}">
+        <div class="t">${b.n} ${CLASES[P.clase].bg === k ? '<span class="tag rec">Recomendado</span>' : ""}</div>
+        <div class="d">${b.d}</div><div class="m">Habilidades: ${b.hab.join(", ")} · ${b.dote.replace(/<[^>]+>/g, "").split(":")[0]}</div></button>`).join("")}</div>`,
+  habilidades: () => {
+    const C = CLASES[P.clase], B = TRASFONDOS[P.bg], S = ESPECIES[P.especie];
+    const n = C.hab[0], lista = C.hab[1];
+    const fijas = B.hab;
+    const html = lista.map(h => {
+      if (fijas.includes(h)) return `<label class="check fija sel"><input type="checkbox" checked disabled> ${h}<small>trasfondo</small></label>`;
+      const on = P.habs.includes(h);
+      return `<label class="check ${on ? "sel" : ""}"><input type="checkbox" data-hab="${h}" ${on ? "checked" : ""}> ${h}<small>${CAR_N[HAB[h]]}</small></label>`;
+    }).join("");
+    let extra = "";
+    if (S.habExtra) {
+      const ops = S.habExtra.de.filter(h => !fijas.includes(h) && !P.habs.includes(h));
+      extra = `<div class="sub"><h3>${S.habExtra.t} (por ser ${S.n.toLowerCase()})</h3><p class="ayuda" style="margin:0 0 8px">Elige 1 habilidad extra:</p>
+        <select id="habextra"><option value="">— elige —</option>${ops.map(h => `<option ${P.habExtra?.[0] === h ? "selected" : ""}>${h}</option>`).join("")}</select></div>`;
+    }
+    return `<h2>¿En qué eres bueno?</h2>
+      <p class="ayuda">Las habilidades son lo que sabes hacer fuera del combate: trepar, convencer, notar trampas… Ya tienes ${fijas.length} por tu trasfondo.</p>
+      <div class="contador">Elige ${n}: llevas ${P.habs.length}</div>
+      <div class="lista-checks">${html}</div>${extra}`;
+  },
+  equipo: () => {
+    const C = CLASES[P.clase];
+    const ops = Object.entries(C.eq);
+    return `<h2>Tu equipo</h2>
+      <p class="ayuda">${ops.length > 1 ? "Elige tu paquete inicial:" : "Este es tu equipo inicial (más el paquete de tu trasfondo):"}</p>
+      <div class="opciones">${ops.map(([k, e]) => `
+        <button class="op ${(P.opEq || "A") === k ? "sel" : ""}" data-set="opEq" data-v="${k}">
+          <div class="t">${ops.length > 1 ? (k === "A" ? "⚔️ Cuerpo a cuerpo" : "🏹 A distancia") : "🎒 Equipo de " + C.n.toLowerCase()}</div>
+          <div class="d">${e.txt}</div></button>`).join("")}</div>`;
+  },
+  detalles: () => `
+    <h2>Dale vida a tu personaje</h2>
+    <p class="ayuda">Esto no cambia los números, pero hace la historia más divertida. Usa 🎲 para ideas al azar.</p>
+    <div class="fila"><label class="f">Nombre<input class="t" id="d-nombre" value="${esc(P.nombre || "")}"></label><button class="b s" data-dado="nombre">🎲</button></div><br>
+    <label class="f">Tu nombre (jugador)<input class="t" id="d-jugador" value="${esc(P.jugador || "")}"></label>
+    <div class="fila"><label class="f">¿Por qué te aventuras?<input class="t" id="d-motivo" value="${esc(P.motivo || "")}"></label><button class="b s" data-dado="motivo">🎲</button></div><br>
+    <div class="fila"><label class="f">Rasgo de personalidad<input class="t" id="d-rasgo" value="${esc(P.rasgo || "")}"></label><button class="b s" data-dado="rasgo">🎲</button></div><br>
+    <div class="fila"><label class="f">Detalle de apariencia<input class="t" id="d-apariencia" value="${esc(P.apariencia || "")}"></label><button class="b s" data-dado="apariencia">🎲</button></div>`,
+  ficha: () => {
+    const R = calcular();
+    const salv = CAR.map(k => `<div class="${R.C.salv.includes(k) ? "c" : "no"}">${R.C.salv.includes(k) ? "●" : "○"} ${CAR_N[k]}</div><div>${fmt(R.m[k] + (R.C.salv.includes(k) ? R.pb : 0))}</div>`).join("");
+    const habs = TODAS.map(h => { const c = R.habs.has(h); return `<div class="${c ? "c" : "no"}">${c ? "●" : "○"} ${h} <small>(${HAB[h]})</small></div><div>${fmt(R.m[HAB[h]] + (c ? R.pb : 0))}</div>`; }).join("");
+    return `
+    ${P.modo === "azar" ? `<div class="acciones no-print"><button class="b p" data-ir="azar">🎲 Volver a tirar</button></div>` : ""}
+    <div class="ficha" id="ficha">
+      <h2>${esc(P.nombre || "Sin nombre")}</h2>
+      <div class="sub2">${R.C.n} nivel 1 · ${R.S.n}${P.sub ? ` (${P.sub})` : ""} · ${R.B.n}${P.jugador ? ` · Jugador: ${esc(P.jugador)}` : ""}</div>
+      <div class="cars">${CAR.map(k => `<div class="car"><div class="n">${k}</div><div class="mod">${fmt(R.m[k])}</div><div class="v">${R.val[k]}</div></div>`).join("")}</div>
+      <h3>Combate</h3>
+      <div class="stats">
+        <div class="st"><b>${R.ca}</b><span>CA</span></div><div class="st"><b>${R.pg}</b><span>PG</span></div>
+        <div class="st"><b>${fmt(R.ini)}</b><span>INICIATIVA</span></div><div class="st"><b>${R.vel}</b><span>VELOCIDAD</span></div>
+        <div class="st"><b>+${R.pb}</b><span>COMPETENCIA</span></div><div class="st"><b>d${R.C.dg}</b><span>DADO DE GOLPE</span></div>
+        <div class="st"><b>${R.percPas}</b><span>PERCEPCIÓN PASIVA</span></div>${R.mag ? `<div class="st"><b>${R.mag.cd}</b><span>CD CONJUROS</span></div>` : `<div class="st"><b>—</b><span>CD CONJUROS</span></div>`}
+      </div>
+      <h3>Ataques</h3>
+      <table class="armas"><tr><th>Arma</th><th>Ataque</th><th>Daño</th></tr>${R.armas.map(a => `<tr><td>${a.n}</td><td>${fmt(a.atq)}</td><td>${a.dmg}</td></tr>`).join("")}</table>
+      ${R.mag ? `<h3>Magia</h3><ul><li>Característica: <b>${CAR_N[R.mag.car]}</b> · CD de salvación <b>${R.mag.cd}</b> · Ataque de conjuro <b>${fmt(R.mag.atq)}</b></li>
+        <li>${R.mag.trucos ? `<b>${R.mag.trucos}</b> trucos · ` : ""}<b>${R.mag.prep}</b> conjuros preparados · Espacios: ${R.mag.esp}</li>
+        <li><i>Elige tus conjuros de la lista de ${R.C.n.toLowerCase()} con ayuda de tu DM.</i></li></ul>` : ""}
+      <div class="dos">
+        <div><h3>Salvaciones</h3><div class="hab">${salv}</div></div>
+        <div><h3>Habilidades</h3><div class="hab">${habs}</div></div>
+      </div>
+      <h3>Rasgos y dotes</h3><ul>${R.rasgos.map(r => `<li>${r}</li>`).join("")}</ul>
+      <h3>Equipo</h3><ul><li>${R.eq.txt}</li><li>Del trasfondo (${R.B.n.toLowerCase()}): su paquete de equipo o 50 po. Herramienta: ${R.B.herr}.</li></ul>
+      ${P.motivo || P.rasgo || P.apariencia ? `<h3>Personalidad</h3><ul>${P.motivo ? `<li><b>Motivación:</b> ${esc(P.motivo)}</li>` : ""}${P.rasgo ? `<li><b>Rasgo:</b> ${esc(P.rasgo)}</li>` : ""}${P.apariencia ? `<li><b>Apariencia:</b> ${esc(P.apariencia)}</li>` : ""}</ul>` : ""}
+      <p class="nota">Basado en el SRD 5.2.1 de Wizards of the Coast LLC (CC-BY-4.0). Traducción y adaptación propias.</p>
+    </div>
+    <div class="acciones no-print">
+      <button class="b" data-accion="imprimir">🖨️ Imprimir / PDF</button>
+      <button class="b" data-accion="grupo">🛡️ Agregar al grupo del DM</button>
+      <button class="b" data-accion="nuevo">✨ Crear otro</button>
+    </div>`;
+  },
+};
+
+function puedeSeguir() {
+  const v = PASOS[paso];
+  if (v === "clase") return !!P.clase;
+  if (v === "especie") return !!P.especie && (!ESPECIES[P.especie].sub || !!P.sub);
+  if (v === "trasfondo") return !!P.bg;
+  if (v === "habilidades") {
+    const S = ESPECIES[P.especie];
+    return P.habs.length === CLASES[P.clase].hab[0] && (!S.habExtra || !!P.habExtra?.[0]);
+  }
+  if (v === "detalles") return !!(P.nombre || "").trim();
+  return true;
+}
+function pintar() {
+  const v = PASOS[paso];
+  $("#vista").innerHTML = VISTAS[v]();
+  const total = PASOS.length - 2;
+  $("#prog").style.width = (v === "inicio" ? 0 : v === "ficha" ? 100 : (paso / (total + 1)) * 100) + "%";
+  $("#paso-txt").textContent = v === "inicio" || v === "ficha" ? "" : `Paso ${paso} de ${total}`;
+  $("#nav").style.display = v === "inicio" ? "none" : "";
+  $("#sig").style.display = v === "ficha" ? "none" : "";
+  $("#atras").textContent = v === "ficha" && P.modo === "azar" ? "← Inicio" : "← Atrás";
+  $("#sig").textContent = PASOS[paso + 1] === "ficha" ? "Ver mi ficha ✓" : "Siguiente →";
+  $("#sig").disabled = !puedeSeguir();
+  window.scrollTo(0, 0);
+}
+function refrescarBoton() { $("#sig").disabled = !puedeSeguir(); }
+
+/* ============================ EVENTOS ============================ */
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-ir],[data-set],[data-dado],[data-accion]");
+  if (!t) return;
+  if (t.dataset.ir === "azar") { aleatorio(); paso = PASOS.indexOf("ficha"); return pintar(); }
+  if (t.dataset.ir === "elegir") { P = { modo:"elegir", habs:[] }; paso = 1; return pintar(); }
+  if (t.dataset.set) {
+    const k = t.dataset.set, v = t.dataset.v;
+    if (k === "clase" && P.clase !== v) { P.clase = v; P.bg = CLASES[v].bg; P.habs = []; P.opEq = "A"; }
+    if (k === "especie" && P.especie !== v) { P.especie = v; P.sub = ESPECIES[v].sub ? Object.keys(ESPECIES[v].sub.ops)[0] : null; P.habExtra = null; }
+    if (k === "bg" && P.bg !== v) { P.bg = v; P.habs = P.habs.filter(h => !TRASFONDOS[v].hab.includes(h)); P.habExtra = null; }
+    if (k === "opEq") P.opEq = v;
+    const y = window.scrollY; pintar(); window.scrollTo(0, y); return;
+  }
+  if (t.dataset.dado) {
+    const k = t.dataset.dado;
+    const v = k === "nombre" ? `${al(NOMBRES)} ${al(APODOS)}` : al({ motivo:MOTIVOS, rasgo:RASGOS_P, apariencia:APARIENCIAS }[k]);
+    P[k] = v; $("#d-" + k).value = v; refrescarBoton(); return;
+  }
+  const acc = t.dataset.accion;
+  if (acc === "imprimir") window.print();
+  if (acc === "nuevo") { P = {}; paso = 0; pintar(); }
+  if (acc === "grupo") agregarAlGrupo();
+});
+document.addEventListener("change", e => {
+  const t = e.target;
+  if (t.dataset.hab) {
+    const h = t.dataset.hab, n = CLASES[P.clase].hab[0];
+    if (t.checked) { if (P.habs.length >= n) { t.checked = false; return toast(`Solo puedes elegir ${n}. Quita otra primero.`); } P.habs.push(h); }
+    else P.habs = P.habs.filter(x => x !== h);
+    if (P.habExtra && P.habs.includes(P.habExtra[0])) P.habExtra = null;
+    const y = window.scrollY; pintar(); window.scrollTo(0, y); return;
+  }
+  if (t.id === "sub") { P.sub = t.value; $("#sub-d").innerHTML = ESPECIES[P.especie].sub.ops[P.sub]; refrescarBoton(); }
+  if (t.id === "habextra") { P.habExtra = t.value ? [t.value] : null; refrescarBoton(); }
+});
+document.addEventListener("input", e => {
+  const id = e.target.id;
+  if (id && id.startsWith("d-")) { P[id.slice(2)] = e.target.value; refrescarBoton(); }
+});
+$("#sig").onclick = () => { if (puedeSeguir()) { paso++; pintar(); } };
+$("#atras").onclick = () => {
+  if (PASOS[paso] === "ficha" && P.modo === "azar") { paso = 0; return pintar(); }
+  paso = Math.max(0, paso - 1); pintar();
+};
+
+/* ===== Integración con el Panel DM (mismo dispositivo, mismo sitio) ===== */
+function agregarAlGrupo() {
+  const R = calcular();
+  const CLAVE = "mesa-dnd-dm-v1";
+  let E;
+  try { E = JSON.parse(localStorage.getItem(CLAVE)) || { grupo:{}, combate:{ ronda:0, turno:0, lista:[] }, historial:[] }; }
+  catch { E = { grupo:{}, combate:{ ronda:0, turno:0, lista:[] }, historial:[] }; }
+  const id = Math.random().toString(36).slice(2, 10);
+  const espacios = {};
+  if (R.mag) espacios[1] = { max: P.clase === "brujo" ? 1 : 2, usados: 0 };
+  E.grupo[id] = { id, nombre: P.nombre, jugador: P.jugador || "", clase: R.C.n, nivel: 1, pgMax: R.pg, pg: R.pg, pgTemp: 0,
+                  ca: R.ca, bono: R.ini, espacios, notas: `${R.S.n} · ${R.B.n}` };
+  try { localStorage.setItem(CLAVE, JSON.stringify(E)); toast("Agregado al grupo del Panel DM."); }
+  catch { toast("No se pudo guardar en este dispositivo."); }
+}
+
+pintar();
+</script>
+</body>
+</html>
