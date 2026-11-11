@@ -4,87 +4,99 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Crea tu personaje — Mesa D&D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="estilos.css">
 <style>
-  :root { --bg:#15121a; --card:#211c27; --card2:#2a2431; --line:#352d3e; --txt:#ede7f3; --mut:#a296b0; --acc:#d4a94e; --acc2:#8f6fd1; --ok:#5fbf7a; }
-  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  html,body { margin:0; background:var(--bg); color:var(--txt); font-family:system-ui,-apple-system,"Segoe UI",sans-serif; }
-  main { max-width:720px; margin:0 auto; padding:14px 14px 90px; }
-  .top { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
-  .top h1 { font-size:1.1rem; margin:0; flex:1; }
-  .prog { height:5px; background:var(--card2); border-radius:4px; overflow:hidden; margin-bottom:16px; }
-  .prog i { display:block; height:100%; background:var(--acc); transition:width .3s; }
-  h2 { font-size:1.25rem; margin:6px 0 4px; }
-  p.ayuda { color:var(--mut); margin:0 0 14px; font-size:.95rem; line-height:1.45; }
-  .opciones { display:grid; gap:10px; }
-  .op { background:var(--card); border:2px solid var(--line); border-radius:12px; padding:12px 14px; cursor:pointer; text-align:left; color:var(--txt); font:inherit; width:100%; }
-  .op.sel { border-color:var(--acc); background:#2b2416; }
-  .op .t { font-weight:700; font-size:1.02rem; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-  .op .d { color:#cfc6da; font-size:.9rem; margin-top:4px; line-height:1.4; }
-  .op .m { color:var(--mut); font-size:.8rem; margin-top:6px; }
-  .tag { font-size:.68rem; padding:2px 7px; border-radius:20px; font-weight:700; background:var(--card2); color:var(--mut); }
-  .tag.facil { background:#1f3a29; color:#8fe0a7; } .tag.media { background:#3a3220; color:#f0cf7a; } .tag.alta { background:#3a2026; color:#f08f9b; }
-  .tag.rec { background:var(--acc); color:#1b1408; }
-  .grande { display:grid; gap:12px; }
-  .grande .op { padding:20px; } .grande .op .t { font-size:1.2rem; }
-  .barra-nav { position:fixed; bottom:0; left:0; right:0; background:#1b1720; border-top:1px solid var(--line); padding:10px 14px calc(10px + env(safe-area-inset-bottom)); display:flex; gap:10px; justify-content:center; }
-  .barra-nav > div { max-width:720px; width:100%; display:flex; gap:10px; }
-  button.b { background:var(--card2); color:var(--txt); border:1px solid var(--line); border-radius:10px; padding:12px 16px; font-size:1rem; cursor:pointer; font-family:inherit; }
-  button.p { background:var(--acc); color:#1b1408; border-color:var(--acc); font-weight:700; flex:1; }
-  button.p:disabled { opacity:.4; }
-  button.s { padding:8px 12px; font-size:.88rem; }
-  .check { display:flex; align-items:center; gap:10px; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px 12px; cursor:pointer; }
-  .check.sel { border-color:var(--acc2); background:#2a2340; }
-  .check.fija { opacity:.75; cursor:default; }
-  .check input { width:20px; height:20px; accent-color:var(--acc2); }
-  .check small { color:var(--mut); margin-left:auto; }
-  .lista-checks { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:8px; }
-  .contador { color:var(--acc); font-weight:700; margin-bottom:10px; }
-  label.f { display:flex; flex-direction:column; gap:4px; font-size:.85rem; color:var(--mut); margin-bottom:12px; }
-  input.t, select { background:#120f16; color:var(--txt); border:1px solid var(--line); border-radius:9px; padding:10px; font-size:16px; font-family:inherit; width:100%; }
-  .fila { display:flex; gap:8px; align-items:flex-end; } .fila > label { flex:1; margin-bottom:0; }
-  .sub { margin-top:12px; padding:12px; background:var(--card2); border-radius:10px; }
-  .sub h3 { margin:0 0 8px; font-size:.95rem; color:var(--acc); }
+  main { max-width:760px; margin:0 auto; padding:0 16px 110px; }
+  .top { display:flex; align-items:center; gap:12px; padding:20px 0 14px; border-bottom:1px solid rgba(195,160,106,.16); margin-bottom:18px; }
+  .top .casa { color:var(--oro); display:inline-flex; padding:6px; border-radius:3px; }
+  .top .casa:hover { background:rgba(0,0,0,.2); }
+  .top h1 { flex:1; font-size:1.05rem; font-weight:500; letter-spacing:.18em; text-transform:uppercase; color:var(--crema); }
+  /* Progreso: cinta con marcas, como un marcapáginas */
+  .progreso { display:flex; align-items:center; gap:10px; margin:2px 0 18px; }
+  .prog { flex:1; height:2px; background:rgba(195,160,106,.18); overflow:hidden; }
+  .prog i { display:block; height:100%; background:var(--oro); transition:width .3s; }
+  #paso-txt { color:var(--crema-suave); font:500 .66rem var(--f-texto); letter-spacing:.16em; text-transform:uppercase; white-space:nowrap; }
+  /* Hoja del paso */
+  .hoja { padding:30px 22px; }
+  .hoja h2 { font-size:clamp(1.9rem, 6vw, 2.6rem); font-weight:500; margin-top:8px; }
+  p.ayuda { color:var(--tinta-suave); margin:6px 0 18px; font-size:.98rem; }
+  .opciones { display:grid; gap:12px; }
+  .grande { display:grid; gap:14px; }
+  .grande .opcion { padding:22px 22px 22px 76px; }
+  .grande .opcion .sello { width:46px; height:46px; left:16px; top:20px; }
+  .grande .opcion .t { font-size:1.75rem; }
+  .estampa.facil { color:var(--bosque); } .estampa.media { color:var(--ambar-tinta); } .estampa.alta { color:var(--borgona); }
+  .estampa.rec { color:var(--manuscrito); background:var(--borgona); border-color:var(--borgona); }
+  /* Habilidades: casillas en el papel */
+  .contador { font-weight:600; color:var(--borgona); margin-bottom:10px; }
+  .lista-checks { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:8px; }
+  .check { display:flex; align-items:center; gap:10px; padding:11px 12px; cursor:pointer; border-radius:var(--radio);
+    background:var(--manuscrito); border:1px solid rgba(44,34,25,.16); color:var(--tinta); }
+  .check:hover { border-color:rgba(44,34,25,.45); }
+  .check.sel { border-color:var(--borgona); box-shadow:inset 0 0 0 1px var(--borgona); }
+  .check.fija { cursor:default; opacity:.85; }
+  .check small { color:var(--tinta-suave); margin-left:auto; font-size:.75rem; }
+  .sub { margin-top:18px; padding:16px; border-top:1px solid rgba(44,34,25,.2); border-bottom:1px solid rgba(44,34,25,.2); }
+  .sub h3 { font-size:1.35rem; margin-bottom:8px; }
+  .sub select { width:100%; }
+  label.f { display:flex; flex-direction:column; gap:6px; font:600 .66rem var(--f-texto); letter-spacing:.12em; text-transform:uppercase; color:var(--tinta-suave); margin-bottom:16px; }
+  input.t { width:100%; }
+  .fila-d { display:flex; gap:8px; align-items:flex-end; margin-bottom:14px; } .fila-d > label { flex:1; margin-bottom:0; }
+  /* Barra inferior: tabla de madera */
+  .barra-nav { position:fixed; bottom:0; left:0; right:0; z-index:5; padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+    background:rgba(20,16,12,.94); backdrop-filter:blur(6px); border-top:1px solid rgba(195,160,106,.2); }
+  .barra-nav > div { max-width:760px; margin:0 auto; display:flex; gap:10px; }
+  .barra-nav .btn.laton { flex:1; min-height:48px; }
+  .acciones { display:flex; flex-wrap:wrap; gap:10px; margin:16px 0; }
 
-  /* Ficha */
-  .ficha { background:#fbf8f2; color:#1d1a16; border-radius:12px; padding:18px; font-size:.92rem; }
-  .ficha h2 { color:#1d1a16; margin:0; font-size:1.5rem; }
-  .ficha .sub2 { color:#6b6157; margin:2px 0 12px; }
-  .ficha h3 { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8a5a12; margin:16px 0 6px; border-bottom:1px solid #e3d9c8; padding-bottom:3px; }
-  .cars { display:grid; grid-template-columns:repeat(6,1fr); gap:6px; }
-  .car { border:1.5px solid #cbbfa9; border-radius:10px; text-align:center; padding:6px 2px; }
-  .car .n { font-size:.68rem; font-weight:700; color:#6b6157; }
-  .car .mod { font-size:1.35rem; font-weight:800; }
-  .car .v { font-size:.75rem; color:#6b6157; }
-  .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
-  .st { border:1.5px solid #cbbfa9; border-radius:10px; text-align:center; padding:6px 2px; }
-  .st b { display:block; font-size:1.25rem; } .st span { font-size:.68rem; color:#6b6157; font-weight:700; }
-  .dos { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-  .ficha ul { margin:0; padding-left:18px; } .ficha li { margin:3px 0; line-height:1.35; }
-  .hab { display:grid; grid-template-columns:1fr auto; gap:1px 8px; font-size:.85rem; }
-  .hab .c { font-weight:700; } .hab .no { color:#8b8178; }
-  table.armas { width:100%; border-collapse:collapse; font-size:.85rem; }
-  table.armas th { text-align:left; font-size:.7rem; color:#6b6157; } table.armas td { padding:3px 2px; border-top:1px solid #eee4d3; }
-  .nota { font-size:.78rem; color:#6b6157; margin-top:12px; }
-  .acciones { display:flex; flex-wrap:wrap; gap:8px; margin:14px 0; }
-  @media (max-width:520px) { .cars { grid-template-columns:repeat(3,1fr); } .dos { grid-template-columns:1fr; } }
+  /* ===== Ficha de personaje: documento ===== */
+  .ficha { padding:34px 26px; font-size:.93rem; background:var(--fibras), var(--manuscrito); }
+  .ficha .encab { display:flex; gap:16px; align-items:center; border-bottom:1px solid rgba(44,34,25,.5); padding-bottom:16px; margin-bottom:8px; }
+  .ficha .encab .sello { width:54px; height:54px; font-size:1.6rem; }
+  .ficha h2 { font-size:2.3rem; font-weight:500; }
+  .ficha .sub2 { color:var(--tinta-suave); font-size:.9rem; }
+  .ficha h3 { font-family:var(--f-texto); font-size:.64rem; font-weight:600; text-transform:uppercase; letter-spacing:.18em; color:var(--borgona);
+    margin:18px 0 8px; display:flex; align-items:center; gap:8px; }
+  .ficha h3::after { content:""; flex:1; height:1px; background:rgba(112,59,58,.35); }
+  .cars { display:grid; grid-template-columns:repeat(6,1fr); gap:8px; }
+  .car { text-align:center; padding:10px 2px 8px; border:1px solid rgba(44,34,25,.3); background:var(--manuscrito); }
+  .car .n { font-size:.66rem; font-weight:700; letter-spacing:.06em; color:var(--tinta-suave); }
+  .car .mod { font-family:var(--f-titulo); font-size:1.9rem; font-weight:500; line-height:1.1; }
+  .car .v { display:inline-block; font-size:.72rem; color:var(--tinta-suave); margin-top:2px; }
+  .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  .st { text-align:center; padding:10px 4px; border:1px solid rgba(44,34,25,.22); }
+  .st b { display:block; font-family:var(--f-titulo); font-size:1.7rem; font-weight:500; line-height:1.1; }
+  .st span { font-size:.64rem; font-weight:700; letter-spacing:.05em; color:var(--tinta-suave); text-transform:uppercase; }
+  .st.clave { border-color:var(--borgona); box-shadow:inset 0 0 0 1px var(--borgona); }
+  .dos { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  .ficha ul { margin:0; padding-left:18px; } .ficha li { margin:4px 0; line-height:1.45; }
+  .hab { display:grid; grid-template-columns:1fr auto; gap:2px 10px; font-size:.86rem; }
+  .hab .c { font-weight:700; } .hab .no { color:var(--tinta-suave); }
+  .hab small { color:var(--tinta-suave); font-weight:400; }
+  table.armas { width:100%; border-collapse:collapse; font-size:.88rem; }
+  table.armas th { text-align:left; font-size:.68rem; letter-spacing:.06em; text-transform:uppercase; color:var(--tinta-suave); padding:4px 2px; }
+  table.armas td { padding:6px 2px; border-top:1px solid rgba(89,65,47,.25); }
+  .nota { font-size:.75rem; color:var(--tinta-suave); margin-top:16px; }
+  @media (max-width:560px) { .cars { grid-template-columns:repeat(3,1fr); } .dos { grid-template-columns:1fr; } .stats { grid-template-columns:repeat(2,1fr); } }
   @media print {
-    body, html { background:#fff; } .no-print, .barra-nav, .top, .prog { display:none !important; }
-    main { padding:0; max-width:none; } .ficha { border-radius:0; padding:0; font-size:10.5pt; }
-    .cars { grid-template-columns:repeat(6,1fr); } .dos { grid-template-columns:1fr 1fr; }
+    html, body { background:#fff !important; } .no-print, .barra-nav, .top, .progreso, #sprite-iconos { display:none !important; }
+    main { padding:0; max-width:none; } .ficha { box-shadow:none !important; background:#fff !important; padding:0; font-size:10.5pt; }
+    .cars { grid-template-columns:repeat(6,1fr); } .dos { grid-template-columns:1fr 1fr; } .stats { grid-template-columns:repeat(4,1fr); }
   }
-  .toast { position:fixed; left:50%; bottom:90px; transform:translateX(-50%); background:var(--card2); border:1px solid var(--acc); padding:10px 16px; border-radius:10px; opacity:0; transition:opacity .2s; pointer-events:none; z-index:9; }
-  .toast.on { opacity:1; }
 </style>
 </head>
 <body>
+<script src="ui.js"></script>
 <main>
-  <div class="top"><h1>🧙 Crea tu personaje</h1><span id="paso-txt" style="color:var(--mut);font-size:.85rem"></span></div>
-  <div class="prog"><i id="prog"></i></div>
+  <div class="top"><a class="casa" href="index.html" aria-label="Volver al inicio"><svg class="ico g" aria-hidden="true"><use href="#i-casa"/></svg></a><h1>Crea tu personaje</h1><span id="lectura"></span></div>
+  <div class="progreso"><div class="prog"><i id="prog"></i></div><span id="paso-txt"></span></div>
   <div id="vista"></div>
 </main>
 <div class="barra-nav no-print" id="nav"><div>
-  <button class="b" id="atras">← Atrás</button>
-  <button class="b p" id="sig">Siguiente →</button>
+  <button class="btn" id="atras"></button>
+  <button class="btn laton" id="sig"></button>
 </div></div>
 <div class="toast" id="toast"></div>
 
@@ -110,27 +122,27 @@ const A = {
 };
 
 const CLASES = {
-  barbaro: { n:"Bárbaro", ico:"🪓", dg:12, comp:"facil", salv:["FUE","CON"], hab:[2,["Trato con animales","Atletismo","Intimidación","Naturaleza","Percepción","Supervivencia"]],
+  barbaro: { n:"Bárbaro", dg:12, comp:"facil", salv:["FUE","CON"], hab:[2,["Trato con animales","Atletismo","Intimidación","Naturaleza","Percepción","Supervivencia"]],
     arr:[15,13,14,10,12,8], bg:"soldado", inc:{FUE:2,CON:1},
     d:"Un guerrero feroz que entra en furia y aguanta golpes que tumbarían a cualquiera.", gusta:"te gusta ir al frente y pegar fuerte",
     eq:{ A:{ txt:"Gran hacha, 4 hachas de mano, paquete de explorador y 15 po", armas:["granhacha","hachamano"], ca:c=>10+c.DES+c.CON } },
     rasgos:c=>["<b>Furia</b> (2 usos; acción adicional): +2 al daño con ataques de Fuerza, resistencia al daño contundente, cortante y perforante, y ventaja en pruebas y salvaciones de Fuerza. Recuperas 1 uso con descanso corto y todos con descanso largo.",
       "<b>Defensa sin armadura</b>: sin armadura, tu CA es 10 + DES + CON (puedes usar escudo).",
       "<b>Maestría con armas</b>: usas la propiedad de maestría de 2 tipos de armas cuerpo a cuerpo."] },
-  bardo: { n:"Bardo", ico:"🎻", dg:8, comp:"media", salv:["DES","CAR"], hab:[3,TODAS], arr:[8,14,12,13,10,15], bg:"acolito", inc:{CAR:2,INT:1},
+  bardo: { n:"Bardo", dg:8, comp:"media", salv:["DES","CAR"], hab:[3,TODAS], arr:[8,14,12,13,10,15], bg:"acolito", inc:{CAR:2,INT:1},
     d:"Artista con magia: inspira a sus aliados, encanta a la gente y sabe un poco de todo.", gusta:"te gusta hablar, apoyar al grupo y lucirte",
     eq:{ A:{ txt:"Armadura de cuero, 2 dagas, un instrumento musical, paquete de artista y 19 po", armas:["daga"], ca:c=>11+c.DES } },
     magia:{ car:"CAR", trucos:2, prep:4, esp:"2 de nivel 1" },
     rasgos:c=>[`<b>Inspiración bárdica</b> (acción adicional): das a un aliado un d6 que puede sumar a una tirada d20 fallida. Usos: ${Math.max(1,c.CAR)} por descanso largo.`,
       "<b>Lanzamiento de conjuros</b> (Carisma): 2 trucos y 4 conjuros preparados de la lista de bardo."] },
-  clerigo: { n:"Clérigo", ico:"✨", dg:8, comp:"media", salv:["SAB","CAR"], hab:[2,["Historia","Perspicacia","Medicina","Persuasión","Religión"]],
+  clerigo: { n:"Clérigo", dg:8, comp:"media", salv:["SAB","CAR"], hab:[2,["Historia","Perspicacia","Medicina","Persuasión","Religión"]],
     arr:[14,8,13,10,15,12], bg:"acolito", inc:{SAB:2,CAR:1},
     d:"Elegido de un dios: cura, protege y castiga con poder divino. El corazón del grupo.", gusta:"te gusta cuidar a los demás",
     eq:{ A:{ txt:"Camisote de mallas, escudo, maza, símbolo sagrado, paquete de sacerdote y 7 po", armas:["maza"], ca:c=>13+Math.min(2,c.DES)+2 } },
     magia:{ car:"SAB", trucos:3, prep:4, esp:"2 de nivel 1" },
     rasgos:c=>["<b>Lanzamiento de conjuros</b> (Sabiduría): 3 trucos y 4 conjuros preparados de la lista de clérigo.",
       "<b>Orden divina</b>: elige <i>Protector</i> (armas marciales y armadura pesada) o <i>Taumaturgo</i> (un truco extra y bono a Arcanos y Religión)."] },
-  druida: { n:"Druida", ico:"🌿", dg:8, comp:"alta", salv:["INT","SAB"], hab:[2,["Trato con animales","Arcanos","Perspicacia","Medicina","Naturaleza","Percepción","Religión","Supervivencia"]],
+  druida: { n:"Druida", dg:8, comp:"alta", salv:["INT","SAB"], hab:[2,["Trato con animales","Arcanos","Perspicacia","Medicina","Naturaleza","Percepción","Religión","Supervivencia"]],
     arr:[8,12,14,13,15,10], bg:"sabio", inc:{SAB:2,CON:1},
     d:"Guardián de la naturaleza con magia de plantas, animales y elementos.", gusta:"te gusta la naturaleza y tener muchas opciones",
     eq:{ A:{ txt:"Armadura de cuero, escudo, hoz, foco druídico (bastón), paquete de explorador, útiles de herborista y 9 po", armas:["hoz","baston"], ca:c=>11+c.DES+2 } },
@@ -138,7 +150,7 @@ const CLASES = {
     rasgos:c=>["<b>Druídico</b>: conoces el idioma secreto de los druidas y siempre tienes preparado <i>Hablar con los animales</i>.",
       "<b>Orden primigenia</b>: elige <i>Mago</i> (un truco extra y bono a Arcanos y Naturaleza) o <i>Guardián</i> (armas marciales y armadura media).",
       "<b>Lanzamiento de conjuros</b> (Sabiduría): 2 trucos y 4 conjuros preparados de la lista de druida."] },
-  guerrero: { n:"Guerrero", ico:"⚔️", dg:10, comp:"facil", salv:["FUE","CON"], hab:[2,["Acrobacias","Trato con animales","Atletismo","Historia","Perspicacia","Intimidación","Persuasión","Percepción","Supervivencia"]],
+  guerrero: { n:"Guerrero", dg:10, comp:"facil", salv:["FUE","CON"], hab:[2,["Acrobacias","Trato con animales","Atletismo","Historia","Perspicacia","Intimidación","Persuasión","Percepción","Supervivencia"]],
     arr:[15,14,13,8,10,12], bg:"soldado", inc:{FUE:2,CON:1},
     d:"Experto en armas y armaduras. Sencillo de jugar y muy resistente.", gusta:"quieres algo directo y sólido",
     eq:{ A:{ txt:"Cota de mallas, espadón, mayal, 8 jabalinas, paquete de explorador de mazmorras y 4 po", armas:["espadon","mayal","jabalina"], ca:c=>16, estilo:"armas a dos manos" },
@@ -146,13 +158,13 @@ const CLASES = {
     rasgos:c=>[`<b>Estilo de combate</b>: ${c._eq.estilo === "arquería" ? "<i>Arquería</i>: +2 a las tiradas de ataque con armas a distancia (ya incluido)." : "<i>Combate con armas a dos manos</i>: al tirar daño con un arma a dos manos, trata los 1 y 2 como 3."}`,
       "<b>Nuevas fuerzas</b> (acción adicional): recuperas 1d10 + tu nivel de PG. 2 usos.",
       "<b>Maestría con armas</b>: usas la propiedad de maestría de 3 tipos de armas."] },
-  monje: { n:"Monje", ico:"👊", dg:8, comp:"media", salv:["FUE","DES"], hab:[2,["Acrobacias","Atletismo","Historia","Perspicacia","Religión","Sigilo"]],
+  monje: { n:"Monje", dg:8, comp:"media", salv:["FUE","DES"], hab:[2,["Acrobacias","Atletismo","Historia","Perspicacia","Religión","Sigilo"]],
     arr:[12,15,13,10,14,8], bg:"criminal", inc:{DES:2,CON:1},
     d:"Artista marcial veloz que pelea con puños y patadas.", gusta:"te gusta moverte rápido y golpear muchas veces",
     eq:{ A:{ txt:"Lanza, 5 dagas, herramientas de artesano o instrumento musical, paquete de explorador y 11 po", armas:["lanza","daga"], ca:c=>10+c.DES+c.SAB, monje:true } },
     rasgos:c=>["<b>Artes marciales</b>: puedes hacer un golpe sin armas como acción adicional; tu dado de artes marciales es d6 y usas Destreza para golpes sin armas y armas de monje.",
       "<b>Defensa sin armadura</b>: sin armadura ni escudo, tu CA es 10 + DES + SAB."] },
-  paladin: { n:"Paladín", ico:"🛡️", dg:10, comp:"media", salv:["SAB","CAR"], hab:[2,["Atletismo","Perspicacia","Intimidación","Medicina","Persuasión","Religión"]],
+  paladin: { n:"Paladín", dg:10, comp:"media", salv:["SAB","CAR"], hab:[2,["Atletismo","Perspicacia","Intimidación","Medicina","Persuasión","Religión"]],
     arr:[15,10,13,8,12,14], bg:"soldado", inc:{FUE:2,CON:1},
     d:"Caballero sagrado con un juramento: pelea en primera fila y también cura.", gusta:"quieres ser el héroe protector",
     eq:{ A:{ txt:"Cota de mallas, escudo, espada larga, 6 jabalinas, símbolo sagrado, paquete de sacerdote y 9 po", armas:["espadalarga","jabalina"], ca:c=>16+2 } },
@@ -160,7 +172,7 @@ const CLASES = {
     rasgos:c=>["<b>Imposición de manos</b> (acción adicional): reserva de 5 PG para curar (5 × nivel).",
       "<b>Lanzamiento de conjuros</b> (Carisma): 2 conjuros preparados de la lista de paladín.",
       "<b>Maestría con armas</b>: usas la propiedad de maestría de 2 tipos de armas."] },
-  explorador: { n:"Explorador", ico:"🏹", dg:10, comp:"media", salv:["FUE","DES"], hab:[3,["Trato con animales","Atletismo","Perspicacia","Investigación","Naturaleza","Percepción","Sigilo","Supervivencia"]],
+  explorador: { n:"Explorador", dg:10, comp:"media", salv:["FUE","DES"], hab:[3,["Trato con animales","Atletismo","Perspicacia","Investigación","Naturaleza","Percepción","Sigilo","Supervivencia"]],
     arr:[12,15,13,8,14,10], bg:"soldado", inc:{DES:2,CON:1},
     d:"Cazador y rastreador experto en la naturaleza, letal con el arco.", gusta:"te gusta atacar a distancia y explorar",
     eq:{ A:{ txt:"Armadura de cuero tachonado, cimitarra, espada corta, arco largo, 20 flechas, carcaj, foco druídico (muérdago), paquete de explorador y 7 po", armas:["arcolargo","cimitarra","espadacorta"], ca:c=>12+c.DES } },
@@ -168,7 +180,7 @@ const CLASES = {
     rasgos:c=>["<b>Enemigo predilecto</b>: siempre tienes preparado <i>Marca del cazador</i> y puedes lanzarlo 2 veces sin gastar espacio por descanso largo.",
       "<b>Lanzamiento de conjuros</b> (Sabiduría): 2 conjuros preparados de la lista de explorador.",
       "<b>Maestría con armas</b>: usas la propiedad de maestría de 2 tipos de armas."] },
-  picaro: { n:"Pícaro", ico:"🗡️", dg:8, comp:"facil", salv:["DES","INT"], hab:[4,["Acrobacias","Atletismo","Engaño","Perspicacia","Intimidación","Investigación","Percepción","Persuasión","Juego de manos","Sigilo"]],
+  picaro: { n:"Pícaro", dg:8, comp:"facil", salv:["DES","INT"], hab:[4,["Acrobacias","Atletismo","Engaño","Perspicacia","Intimidación","Investigación","Percepción","Persuasión","Juego de manos","Sigilo"]],
     arr:[12,15,13,14,10,8], bg:"criminal", inc:{DES:2,CON:1},
     d:"Sigiloso y astuto: abre cerraduras, desactiva trampas y golpea donde más duele.", gusta:"te gusta ser sigiloso y listo",
     eq:{ A:{ txt:"Armadura de cuero, 2 dagas, espada corta, arco corto, 20 flechas, carcaj, herramientas de ladrón, paquete de ladrón y 8 po", armas:["espadacorta","arcocorto","daga"], ca:c=>11+c.DES } },
@@ -176,21 +188,21 @@ const CLASES = {
       "<b>Pericia</b>: elige 2 de tus habilidades; tu bono de competencia se duplica en ellas.",
       "<b>Jerga de ladrones</b>: conoces el lenguaje secreto de los ladrones y un idioma más.",
       "<b>Maestría con armas</b>: usas la propiedad de maestría de 2 tipos de armas."] },
-  hechicero: { n:"Hechicero", ico:"🔥", dg:6, comp:"alta", salv:["CON","CAR"], hab:[2,["Arcanos","Engaño","Perspicacia","Intimidación","Persuasión","Religión"]],
+  hechicero: { n:"Hechicero", dg:6, comp:"alta", salv:["CON","CAR"], hab:[2,["Arcanos","Engaño","Perspicacia","Intimidación","Persuasión","Religión"]],
     arr:[10,13,14,8,12,15], bg:"acolito", inc:{CAR:2,SAB:1},
     d:"La magia corre por su sangre: pocos conjuros, pero muy potentes.", gusta:"quieres lanzar magia explosiva",
     eq:{ A:{ txt:"Lanza, 2 dagas, foco arcano (cristal), paquete de explorador de mazmorras y 28 po", armas:["lanza","daga"], ca:c=>10+c.DES } },
     magia:{ car:"CAR", trucos:4, prep:2, esp:"2 de nivel 1" },
     rasgos:c=>["<b>Lanzamiento de conjuros</b> (Carisma): 4 trucos y 2 conjuros preparados de la lista de hechicero.",
       "<b>Hechicería innata</b> (acción adicional, 1 minuto): +1 a la CD de tus conjuros y ventaja en tus ataques de conjuro. 2 veces por descanso largo."] },
-  brujo: { n:"Brujo", ico:"👁️", dg:8, comp:"alta", salv:["SAB","CAR"], hab:[2,["Arcanos","Engaño","Historia","Intimidación","Investigación","Naturaleza","Religión"]],
+  brujo: { n:"Brujo", dg:8, comp:"alta", salv:["SAB","CAR"], hab:[2,["Arcanos","Engaño","Historia","Intimidación","Investigación","Naturaleza","Religión"]],
     arr:[8,14,13,12,10,15], bg:"acolito", inc:{CAR:2,INT:1},
     d:"Hizo un pacto con un ser poderoso a cambio de magia. Misterioso y versátil.", gusta:"te atrae una historia oscura",
     eq:{ A:{ txt:"Armadura de cuero, hoz, 2 dagas, foco arcano (orbe), libro de saber oculto, paquete de erudito y 15 po", armas:["hoz","daga"], ca:c=>11+c.DES } },
     magia:{ car:"CAR", trucos:2, prep:2, esp:"1 de nivel 1 (vuelve con descanso corto)" },
     rasgos:c=>["<b>Invocaciones sobrenaturales</b>: elige 1 invocación.",
       "<b>Magia de pacto</b> (Carisma): 2 trucos y 2 conjuros preparados de la lista de brujo. Tu espacio de conjuro se recupera con descanso corto."] },
-  mago: { n:"Mago", ico:"📜", dg:6, comp:"alta", salv:["INT","SAB"], hab:[2,["Arcanos","Historia","Perspicacia","Investigación","Medicina","Naturaleza","Religión"]],
+  mago: { n:"Mago", dg:6, comp:"alta", salv:["INT","SAB"], hab:[2,["Arcanos","Historia","Perspicacia","Investigación","Medicina","Naturaleza","Religión"]],
     arr:[8,12,13,15,14,10], bg:"sabio", inc:{INT:2,CON:1},
     d:"Estudioso de la magia arcana con el libro de conjuros más grande del grupo.", gusta:"te gusta resolver problemas con ingenio",
     eq:{ A:{ txt:"2 dagas, foco arcano (bastón), túnica, libro de conjuros, paquete de erudito y 5 po", armas:["daga","baston"], ca:c=>10+c.DES } },
@@ -323,43 +335,55 @@ const COMP = { facil:["Fácil","facil"], media:["Media","media"], alta:["Complej
 
 const VISTAS = {
   inicio: () => `
-    <h2>¡Bienvenido, aventurero!</h2>
-    <p class="ayuda">En D&D interpretas a un héroe. Este asistente te ayuda a crearlo en unos minutos. No necesitas saber las reglas.</p>
-    <div class="grande">
-      <button class="op" data-ir="azar"><div class="t">🎲 Hazlo por mí</div><div class="d">Te armo un personaje completo al azar, listo para jugar. Si no te gusta, vuelves a tirar.</div></button>
-      <button class="op" data-ir="elegir"><div class="t">🧭 Quiero elegir</div><div class="d">Te explico cada opción en lenguaje sencillo y tú decides. Toma unos 10 minutos.</div></button>
-    </div>`,
+    <section class="pergamino hoja">
+      <span class="eyebrow">Tu héroe</span>
+      <h2>¡Bienvenido, aventurero!</h2>
+      <p class="ayuda">En D&D interpretas a un héroe. Te ayudamos a crearlo en unos minutos; no necesitas saber las reglas.</p>
+      <div class="grande">
+        <button class="opcion" data-ir="azar"><span class="sello laton">${ico("dado")}</span><div class="t">Hazlo por mí</div><div class="d">Armamos un personaje completo al azar, listo para jugar. Si no te convence, vuelves a tirar.</div><div class="m">Unos 2 minutos</div></button>
+        <button class="opcion" data-ir="elegir"><span class="sello">${ico("brujula")}</span><div class="t">Quiero elegir</div><div class="d">Te explicamos cada opción en lenguaje sencillo y tú decides.</div><div class="m">Unos 10 minutos · 6 pasos</div></button>
+      </div>
+    </section>`,
   clase: () => `
-    <h2>¿Qué tipo de héroe quieres ser?</h2>
-    <p class="ayuda">La clase es lo más importante: define cómo peleas y qué sabes hacer. Si es tu primera vez, las marcadas como <b>Fácil</b> son ideales.</p>
-    <div class="opciones">${Object.entries(CLASES).map(([k, c]) => `
-      <button class="op ${P.clase === k ? "sel" : ""}" data-set="clase" data-v="${k}">
-        <div class="t">${c.ico} ${c.n} <span class="tag ${COMP[c.comp][1]}">${COMP[c.comp][0]}</span></div>
-        <div class="d">${c.d}</div><div class="m">Elígelo si ${c.gusta}.</div></button>`).join("")}</div>`,
+    <section class="pergamino hoja">
+      <span class="eyebrow">Paso 1 · Clase</span>
+      <h2>¿Qué tipo de héroe quieres ser?</h2>
+      <p class="ayuda">La clase es lo más importante: define cómo peleas y qué sabes hacer. Si es tu primera vez, las marcadas como <b>Fácil</b> son ideales.</p>
+      <div class="opciones">${Object.entries(CLASES).map(([k, c]) => `
+        <button class="opcion ${P.clase === k ? "sel" : ""}" data-set="clase" data-v="${k}">
+          <span class="sello">${c.n[0]}</span>
+          <div class="t">${c.n} <span class="estampa ${COMP[c.comp][1]}">${COMP[c.comp][0]}</span></div>
+          <div class="d">${c.d}</div><div class="m">Elígelo si ${c.gusta}.</div></button>`).join("")}</div>
+    </section>`,
   especie: () => {
     const S = P.especie && ESPECIES[P.especie];
-    return `
-    <h2>¿De qué pueblo vienes?</h2>
-    <p class="ayuda">Tu especie te da habilidades especiales, como ver en la oscuridad o resistir venenos. Elige la que más te guste por su estilo; ninguna es mala.</p>
-    <div class="opciones">${Object.entries(ESPECIES).map(([k, s]) => `
-      <button class="op ${P.especie === k ? "sel" : ""}" data-set="especie" data-v="${k}">
-        <div class="t">${s.n}</div><div class="d">${s.d}</div></button>`).join("")}</div>
-    ${S && S.sub ? `<div class="sub"><h3>${S.sub.t}</h3><select id="sub">${Object.keys(S.sub.ops).map(o => `<option ${P.sub === o ? "selected" : ""}>${o}</option>`).join("")}</select>
-      <p class="ayuda" style="margin:8px 0 0" id="sub-d">${S.sub.ops[P.sub] || ""}</p></div>` : ""}`;
+    return `<section class="pergamino hoja">
+      <span class="eyebrow">Paso 2 · Especie</span>
+      <h2>¿De qué pueblo vienes?</h2>
+      <p class="ayuda">Tu especie te da habilidades especiales, como ver en la oscuridad o resistir venenos. Elige la que más te guste por su estilo: ninguna es mala.</p>
+      <div class="opciones">${Object.entries(ESPECIES).map(([k, s]) => `
+        <button class="opcion ${P.especie === k ? "sel" : ""}" data-set="especie" data-v="${k}">
+          <span class="sello bosque">${s.n[0]}</span><div class="t">${s.n}</div><div class="d">${s.d}</div></button>`).join("")}</div>
+      ${S && S.sub ? `<div class="sub"><h3>${S.sub.t}</h3><select id="sub">${Object.keys(S.sub.ops).map(o => `<option ${P.sub === o ? "selected" : ""}>${o}</option>`).join("")}</select>
+        <p class="ayuda" style="margin:10px 0 0" id="sub-d">${S.sub.ops[P.sub] || ""}</p></div>` : ""}
+    </section>`;
   },
   trasfondo: () => `
-    <h2>¿Qué hacías antes de ser aventurero?</h2>
-    <p class="ayuda">Tu trasfondo es tu pasado. Te da dos habilidades, una dote (un talento especial) y mejora tus características.</p>
-    <div class="opciones">${Object.entries(TRASFONDOS).map(([k, b]) => `
-      <button class="op ${P.bg === k ? "sel" : ""}" data-set="bg" data-v="${k}">
-        <div class="t">${b.n} ${CLASES[P.clase].bg === k ? '<span class="tag rec">Recomendado</span>' : ""}</div>
-        <div class="d">${b.d}</div><div class="m">Habilidades: ${b.hab.join(", ")} · ${b.dote.replace(/<[^>]+>/g, "").split(":")[0]}</div></button>`).join("")}</div>`,
+    <section class="pergamino hoja">
+      <span class="eyebrow">Paso 3 · Trasfondo</span>
+      <h2>¿Qué hacías antes de ser aventurero?</h2>
+      <p class="ayuda">Tu trasfondo es tu pasado. Te da dos habilidades, una dote (un talento especial) y mejora tus características.</p>
+      <div class="opciones">${Object.entries(TRASFONDOS).map(([k, b]) => `
+        <button class="opcion ${P.bg === k ? "sel" : ""}" data-set="bg" data-v="${k}">
+          <span class="sello laton">${b.n[0]}</span>
+          <div class="t">${b.n} ${CLASES[P.clase].bg === k ? '<span class="estampa rec">Recomendado</span>' : ""}</div>
+          <div class="d">${b.d}</div><div class="m">Habilidades: ${b.hab.join(", ")} · Dote: ${b.dote.replace(/<[^>]+>/g, "").split(":")[0]}</div></button>`).join("")}</div>
+    </section>`,
   habilidades: () => {
     const C = CLASES[P.clase], B = TRASFONDOS[P.bg], S = ESPECIES[P.especie];
-    const n = C.hab[0], lista = C.hab[1];
-    const fijas = B.hab;
+    const n = C.hab[0], lista = C.hab[1], fijas = B.hab;
     const html = lista.map(h => {
-      if (fijas.includes(h)) return `<label class="check fija sel"><input type="checkbox" checked disabled> ${h}<small>trasfondo</small></label>`;
+      if (fijas.includes(h)) return `<label class="check fija sel"><input type="checkbox" checked disabled> ${h}<small>por tu trasfondo</small></label>`;
       const on = P.habs.includes(h);
       return `<label class="check ${on ? "sel" : ""}"><input type="checkbox" data-hab="${h}" ${on ? "checked" : ""}> ${h}<small>${CAR_N[HAB[h]]}</small></label>`;
     }).join("");
@@ -367,50 +391,61 @@ const VISTAS = {
     if (S.habExtra) {
       const ops = S.habExtra.de.filter(h => !fijas.includes(h) && !P.habs.includes(h));
       extra = `<div class="sub"><h3>${S.habExtra.t} (por ser ${S.n.toLowerCase()})</h3><p class="ayuda" style="margin:0 0 8px">Elige 1 habilidad extra:</p>
-        <select id="habextra"><option value="">— elige —</option>${ops.map(h => `<option ${P.habExtra?.[0] === h ? "selected" : ""}>${h}</option>`).join("")}</select></div>`;
+        <select id="habextra"><option value="">— elige una —</option>${ops.map(h => `<option ${P.habExtra?.[0] === h ? "selected" : ""}>${h}</option>`).join("")}</select></div>`;
     }
-    return `<h2>¿En qué eres bueno?</h2>
+    return `<section class="pergamino hoja">
+      <span class="eyebrow">Paso 4 · Habilidades</span>
+      <h2>¿En qué eres bueno?</h2>
       <p class="ayuda">Las habilidades son lo que sabes hacer fuera del combate: trepar, convencer, notar trampas… Ya tienes ${fijas.length} por tu trasfondo.</p>
-      <div class="contador">Elige ${n}: llevas ${P.habs.length}</div>
-      <div class="lista-checks">${html}</div>${extra}`;
+      <div class="contador">Elige ${n} · llevas ${P.habs.length}</div>
+      <div class="lista-checks">${html}</div>${extra}
+    </section>`;
   },
   equipo: () => {
-    const C = CLASES[P.clase];
-    const ops = Object.entries(C.eq);
-    return `<h2>Tu equipo</h2>
+    const C = CLASES[P.clase], ops = Object.entries(C.eq);
+    return `<section class="pergamino hoja">
+      <span class="eyebrow">Paso 5 · Equipo</span>
+      <h2>Tu equipo</h2>
       <p class="ayuda">${ops.length > 1 ? "Elige tu paquete inicial:" : "Este es tu equipo inicial (más el paquete de tu trasfondo):"}</p>
       <div class="opciones">${ops.map(([k, e]) => `
-        <button class="op ${(P.opEq || "A") === k ? "sel" : ""}" data-set="opEq" data-v="${k}">
-          <div class="t">${ops.length > 1 ? (k === "A" ? "⚔️ Cuerpo a cuerpo" : "🏹 A distancia") : "🎒 Equipo de " + C.n.toLowerCase()}</div>
-          <div class="d">${e.txt}</div></button>`).join("")}</div>`;
+        <button class="opcion ${(P.opEq || "A") === k ? "sel" : ""}" data-set="opEq" data-v="${k}">
+          <span class="sello laton">${ico(ops.length > 1 ? (k === "A" ? "espadas" : "arco") : "bolsa")}</span>
+          <div class="t">${ops.length > 1 ? (k === "A" ? "Cuerpo a cuerpo" : "A distancia") : "Equipo de " + C.n.toLowerCase()}</div>
+          <div class="d">${e.txt}</div></button>`).join("")}</div>
+    </section>`;
   },
   detalles: () => `
-    <h2>Dale vida a tu personaje</h2>
-    <p class="ayuda">Esto no cambia los números, pero hace la historia más divertida. Usa 🎲 para ideas al azar.</p>
-    <div class="fila"><label class="f">Nombre<input class="t" id="d-nombre" value="${esc(P.nombre || "")}"></label><button class="b s" data-dado="nombre">🎲</button></div><br>
-    <label class="f">Tu nombre (jugador)<input class="t" id="d-jugador" value="${esc(P.jugador || "")}"></label>
-    <div class="fila"><label class="f">¿Por qué te aventuras?<input class="t" id="d-motivo" value="${esc(P.motivo || "")}"></label><button class="b s" data-dado="motivo">🎲</button></div><br>
-    <div class="fila"><label class="f">Rasgo de personalidad<input class="t" id="d-rasgo" value="${esc(P.rasgo || "")}"></label><button class="b s" data-dado="rasgo">🎲</button></div><br>
-    <div class="fila"><label class="f">Detalle de apariencia<input class="t" id="d-apariencia" value="${esc(P.apariencia || "")}"></label><button class="b s" data-dado="apariencia">🎲</button></div>`,
+    <section class="pergamino hoja">
+      <span class="eyebrow">Paso 6 · Personalidad</span>
+      <h2>Dale vida a tu personaje</h2>
+      <p class="ayuda">Esto no cambia los números, pero hace la historia más divertida. Usa el dado para tomar ideas al azar.</p>
+      <div class="fila-d"><label class="f">Nombre<input class="t" id="d-nombre" value="${esc(P.nombre || "")}"></label><button class="btn tinta" data-dado="nombre" aria-label="Nombre al azar">${ico("dado")}</button></div>
+      <label class="f">Tu nombre (jugador)<input class="t" id="d-jugador" value="${esc(P.jugador || "")}"></label>
+      <div class="fila-d"><label class="f">¿Por qué te aventuras?<input class="t" id="d-motivo" value="${esc(P.motivo || "")}"></label><button class="btn tinta" data-dado="motivo" aria-label="Motivo al azar">${ico("dado")}</button></div>
+      <div class="fila-d"><label class="f">Rasgo de personalidad<input class="t" id="d-rasgo" value="${esc(P.rasgo || "")}"></label><button class="btn tinta" data-dado="rasgo" aria-label="Rasgo al azar">${ico("dado")}</button></div>
+      <div class="fila-d"><label class="f">Detalle de apariencia<input class="t" id="d-apariencia" value="${esc(P.apariencia || "")}"></label><button class="btn tinta" data-dado="apariencia" aria-label="Apariencia al azar">${ico("dado")}</button></div>
+    </section>`,
   ficha: () => {
     const R = calcular();
     const salv = CAR.map(k => `<div class="${R.C.salv.includes(k) ? "c" : "no"}">${R.C.salv.includes(k) ? "●" : "○"} ${CAR_N[k]}</div><div>${fmt(R.m[k] + (R.C.salv.includes(k) ? R.pb : 0))}</div>`).join("");
     const habs = TODAS.map(h => { const c = R.habs.has(h); return `<div class="${c ? "c" : "no"}">${c ? "●" : "○"} ${h} <small>(${HAB[h]})</small></div><div>${fmt(R.m[HAB[h]] + (c ? R.pb : 0))}</div>`; }).join("");
     return `
-    ${P.modo === "azar" ? `<div class="acciones no-print"><button class="b p" data-ir="azar">🎲 Volver a tirar</button></div>` : ""}
-    <div class="ficha" id="ficha">
-      <h2>${esc(P.nombre || "Sin nombre")}</h2>
-      <div class="sub2">${R.C.n} nivel 1 · ${R.S.n}${P.sub ? ` (${P.sub})` : ""} · ${R.B.n}${P.jugador ? ` · Jugador: ${esc(P.jugador)}` : ""}</div>
-      <div class="cars">${CAR.map(k => `<div class="car"><div class="n">${k}</div><div class="mod">${fmt(R.m[k])}</div><div class="v">${R.val[k]}</div></div>`).join("")}</div>
+    ${P.modo === "azar" ? `<div class="acciones no-print"><button class="btn laton" data-ir="azar">${ico("reiniciar")} Volver a tirar</button></div>` : ""}
+    <article class="pergamino ficha" id="ficha">
+      <div class="encab"><span class="sello">${esc((P.nombre || "?")[0])}</span><div>
+        <h2>${esc(P.nombre || "Sin nombre")}</h2>
+        <div class="sub2">${R.C.n} nivel 1 · ${R.S.n}${P.sub ? ` (${P.sub})` : ""} · ${R.B.n}${P.jugador ? ` · Jugador: ${esc(P.jugador)}` : ""}</div></div></div>
+      <h3>Características</h3>
+      <div class="cars">${CAR.map(k => `<div class="car"><div class="n">${CAR_N[k].toUpperCase()}</div><div class="mod">${fmt(R.m[k])}</div><div class="v">${R.val[k]}</div></div>`).join("")}</div>
       <h3>Combate</h3>
       <div class="stats">
-        <div class="st"><b>${R.ca}</b><span>CA</span></div><div class="st"><b>${R.pg}</b><span>PG</span></div>
-        <div class="st"><b>${fmt(R.ini)}</b><span>INICIATIVA</span></div><div class="st"><b>${R.vel}</b><span>VELOCIDAD</span></div>
-        <div class="st"><b>+${R.pb}</b><span>COMPETENCIA</span></div><div class="st"><b>d${R.C.dg}</b><span>DADO DE GOLPE</span></div>
-        <div class="st"><b>${R.percPas}</b><span>PERCEPCIÓN PASIVA</span></div>${R.mag ? `<div class="st"><b>${R.mag.cd}</b><span>CD CONJUROS</span></div>` : `<div class="st"><b>—</b><span>CD CONJUROS</span></div>`}
+        <div class="st clave"><b>${R.ca}</b><span>Clase de armadura</span></div><div class="st clave"><b>${R.pg}</b><span>Puntos de golpe</span></div>
+        <div class="st"><b>${fmt(R.ini)}</b><span>Iniciativa</span></div><div class="st"><b>${R.vel}</b><span>Velocidad (pies)</span></div>
+        <div class="st"><b>+${R.pb}</b><span>Competencia</span></div><div class="st"><b>d${R.C.dg}</b><span>Dado de golpe</span></div>
+        <div class="st"><b>${R.percPas}</b><span>Percepción pasiva</span></div><div class="st"><b>${R.mag ? R.mag.cd : "—"}</b><span>CD de conjuros</span></div>
       </div>
       <h3>Ataques</h3>
-      <table class="armas"><tr><th>Arma</th><th>Ataque</th><th>Daño</th></tr>${R.armas.map(a => `<tr><td>${a.n}</td><td>${fmt(a.atq)}</td><td>${a.dmg}</td></tr>`).join("")}</table>
+      <table class="armas"><tr><th>Arma</th><th>Ataque</th><th>Daño</th></tr>${R.armas.map(a => `<tr><td>${a.n}</td><td><b>${fmt(a.atq)}</b></td><td>${a.dmg}</td></tr>`).join("")}</table>
       ${R.mag ? `<h3>Magia</h3><ul><li>Característica: <b>${CAR_N[R.mag.car]}</b> · CD de salvación <b>${R.mag.cd}</b> · Ataque de conjuro <b>${fmt(R.mag.atq)}</b></li>
         <li>${R.mag.trucos ? `<b>${R.mag.trucos}</b> trucos · ` : ""}<b>${R.mag.prep}</b> conjuros preparados · Espacios: ${R.mag.esp}</li>
         <li><i>Elige tus conjuros de la lista de ${R.C.n.toLowerCase()} con ayuda de tu DM.</i></li></ul>` : ""}
@@ -422,11 +457,11 @@ const VISTAS = {
       <h3>Equipo</h3><ul><li>${R.eq.txt}</li><li>Del trasfondo (${R.B.n.toLowerCase()}): su paquete de equipo o 50 po. Herramienta: ${R.B.herr}.</li></ul>
       ${P.motivo || P.rasgo || P.apariencia ? `<h3>Personalidad</h3><ul>${P.motivo ? `<li><b>Motivación:</b> ${esc(P.motivo)}</li>` : ""}${P.rasgo ? `<li><b>Rasgo:</b> ${esc(P.rasgo)}</li>` : ""}${P.apariencia ? `<li><b>Apariencia:</b> ${esc(P.apariencia)}</li>` : ""}</ul>` : ""}
       <p class="nota">Basado en el SRD 5.2.1 de Wizards of the Coast LLC (CC-BY-4.0). Traducción y adaptación propias.</p>
-    </div>
+    </article>
     <div class="acciones no-print">
-      <button class="b" data-accion="imprimir">🖨️ Imprimir / PDF</button>
-      <button class="b" data-accion="grupo">🛡️ Agregar al grupo del DM</button>
-      <button class="b" data-accion="nuevo">✨ Crear otro</button>
+      <button class="btn" data-accion="imprimir">${ico("imprimir")} Imprimir o guardar PDF</button>
+      <button class="btn" data-accion="grupo">${ico("escudo")} Agregar al grupo del DM</button>
+      <button class="btn" data-accion="nuevo">${ico("mas")} Crear otro</button>
     </div>`;
   },
 };
@@ -451,8 +486,8 @@ function pintar() {
   $("#paso-txt").textContent = v === "inicio" || v === "ficha" ? "" : `Paso ${paso} de ${total}`;
   $("#nav").style.display = v === "inicio" ? "none" : "";
   $("#sig").style.display = v === "ficha" ? "none" : "";
-  $("#atras").textContent = v === "ficha" && P.modo === "azar" ? "← Inicio" : "← Atrás";
-  $("#sig").textContent = PASOS[paso + 1] === "ficha" ? "Ver mi ficha ✓" : "Siguiente →";
+  $("#atras").innerHTML = ico("anterior") + (v === "ficha" && P.modo === "azar" ? " Inicio" : " Atrás");
+  $("#sig").innerHTML = PASOS[paso + 1] === "ficha" ? `Ver mi ficha ${ico("check")}` : `Siguiente ${ico("siguiente")}`;
   $("#sig").disabled = !puedeSeguir();
   window.scrollTo(0, 0);
 }
@@ -520,6 +555,7 @@ function agregarAlGrupo() {
   catch { toast("No se pudo guardar en este dispositivo."); }
 }
 
+$("#lectura").innerHTML = botonLectura();
 pintar();
 </script>
 </body>

@@ -4,103 +4,167 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Panel DM — Mesa D&D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="estilos.css">
 <style>
-  :root {
-    --bg:#15121a; --card:#211c27; --card2:#2a2431; --line:#352d3e;
-    --txt:#ede7f3; --mut:#a296b0; --acc:#d4a94e; --acc2:#8f6fd1;
-    --ok:#5fbf7a; --warn:#e0a24a; --err:#e06464; --pj:#5b8fd9; --en:#d0605a; --al:#5fbf7a;
+  /* Variables de compatibilidad: el contenido del panel vive sobre papel */
+  :root { --acc: var(--borgona); --acc2: var(--borgona); --mut: var(--tinta-suave); --txt: var(--tinta); --line: rgba(44,34,25,.16);
+          --card2: rgba(44,34,25,.035); --ok: var(--bosque); --warn: var(--ambar-tinta); --err: var(--borgona); --pj: #3f5a72; --en: var(--borgona); --al: var(--bosque); }
+  body { padding-bottom: 84px; }
+
+  /* Cabecera */
+  header.cab { position: sticky; top: 0; z-index: 6; display: flex; align-items: center; gap: 12px; padding: 14px 18px;
+    background: rgba(20,16,12,.94); backdrop-filter: blur(6px); border-bottom: 1px solid rgba(195,160,106,.18); }
+  header.cab h1 { flex: 1; font-size: 1rem; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; color: var(--crema); }
+  header.cab .ronda { font: 600 .66rem var(--f-texto); letter-spacing: .16em; text-transform: uppercase; color: var(--crema-suave); padding: 8px 11px; border: 1px solid var(--oro-linea); }
+  header.cab .ronda.activa { background: var(--oro); color: #1A140F; border-color: var(--oro); }
+  .casa { color: var(--oro); display: inline-flex; }
+
+  /* Navegación: marcapáginas */
+  nav.marcas { position: fixed; bottom: 0; left: 0; right: 0; z-index: 6; display: flex; padding: 0 4px env(safe-area-inset-bottom);
+    background: rgba(20,16,12,.96); backdrop-filter: blur(6px); border-top: 1px solid rgba(195,160,106,.2); }
+  nav.marcas button { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--crema-suave); cursor: pointer; position: relative;
+    font: 500 .62rem var(--f-texto); letter-spacing: .1em; text-transform: uppercase; padding: 11px 2px 12px; display: flex; flex-direction: column; align-items: center; gap: 5px; transition: color .15s; }
+  nav.marcas button .ico { width: 1.5em; height: 1.5em; }
+  nav.marcas button:hover { color: var(--crema); }
+  nav.marcas button.on { color: var(--oro); }
+  nav.marcas button.on::before { content: ""; position: absolute; top: -1px; left: 22%; right: 22%; height: 2px; background: var(--oro); }
+
+  main { max-width: 780px; margin: 0 auto; padding: 18px 14px; }
+  .tab { display: none; } .tab.on { display: block; animation: aparecer .2s ease; }
+  @keyframes aparecer { from { opacity: 0; } to { opacity: 1; } }
+
+  /* Hoja de papel mate */
+  .card { position: relative; color: var(--tinta); margin-bottom: 14px; padding: 18px;
+    background: var(--fibras), var(--pergamino); border-radius: var(--radio); box-shadow: var(--sombra-papel); }
+  .card .card { box-shadow: none; background: var(--card2); border: 1px solid var(--line); }
+  .card.turno { box-shadow: inset 0 0 0 1px var(--oro), var(--sombra-papel); }
+  .card.turno::before { content: "Su turno"; position: absolute; top: -9px; left: 18px; font: 600 .6rem var(--f-texto); letter-spacing: .16em; text-transform: uppercase;
+    background: var(--oro); color: #1A140F; padding: 3px 8px; }
+  .card.caido { opacity: .7; }
+  h2 { font-size: 1.6rem; margin: 0 0 12px; color: var(--tinta); font-weight: 500; }
+  h3 { font: 600 .64rem var(--f-texto); letter-spacing: .18em; text-transform: uppercase; margin: 16px 0 8px; color: var(--borgona); }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .grow { flex: 1; min-width: 0; } .between { justify-content: space-between; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
+
+  /* Botones */
+  button.b { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font: 600 .7rem var(--f-texto); letter-spacing: .12em; text-transform: uppercase;
+    padding: 11px 14px; min-height: 42px; border-radius: var(--radio); cursor: pointer; color: var(--crema); background: transparent; border: 1px solid var(--oro-linea); transition: background .2s, border-color .2s; }
+  button.b:hover { border-color: var(--oro); background: rgba(195,160,106,.06); }
+  button.b:active { background: rgba(195,160,106,.12); }
+  button.b.p { background: var(--oro); color: #1A140F; border-color: var(--oro); box-shadow: 0 10px 24px -16px rgba(195,160,106,.7); }
+  button.b.p:hover { background: var(--oro-claro); }
+  button.b.dmg { background: var(--borgona); border-color: var(--borgona); color: var(--manuscrito); }
+  button.b.heal { background: var(--bosque); border-color: var(--bosque); color: var(--manuscrito); }
+  button.b.tmp { background: #3a4654; border-color: #3a4654; color: var(--manuscrito); }
+  .card button.b:not(.p):not(.dmg):not(.heal):not(.tmp) { color: var(--tinta); border-color: rgba(44,34,25,.35); }
+  .card button.b:not(.p):not(.dmg):not(.heal):not(.tmp):hover { border-color: var(--tinta); background: rgba(44,34,25,.05); }
+  button.s { padding: 8px 11px; min-height: 36px; font-size: .64rem; }
+  button.x { background: none; border: 0; color: var(--tinta-suave); cursor: pointer; padding: 6px; line-height: 0; }
+  button.x:hover { color: var(--tinta); }
+  .barra-acciones { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .barra-acciones button.b.p.grow { min-height: 52px; font-size: .76rem; }
+
+  input.w { width: 100%; } input[type=number] { width: 72px; }
+  label.f { display: flex; flex-direction: column; gap: 6px; font: 600 .62rem var(--f-texto); letter-spacing: .12em; text-transform: uppercase; color: var(--tinta-suave); }
+
+  /* Combatiente */
+  .nombre { font-family: var(--f-titulo); font-weight: 500; font-size: 1.45rem; line-height: 1.1; }
+  .badge { font: 600 .58rem/1.5 var(--f-texto); letter-spacing: .14em; text-transform: uppercase; padding: 1px 6px; border: 1px solid currentColor; background: transparent !important; }
+  .b-pj { color: var(--pj); } .b-enemigo { color: var(--borgona); } .b-aliado { color: var(--bosque); }
+  .ini { width: 52px !important; height: 52px; min-height: 0; border-radius: 50%; text-align: center; padding: 0;
+    font: 500 1.4rem var(--f-titulo); color: var(--tinta); background: var(--manuscrito) !important; border: 1px solid var(--oro); box-shadow: inset 0 0 0 3px var(--manuscrito), inset 0 0 0 4px var(--oro-linea); }
+  .stat { font-size: .82rem; color: var(--tinta-suave); }
+  .stat b { color: var(--tinta); font-size: .98rem; font-weight: 600; }
+  .barra { margin: 12px 0 10px; }
+  .chips { margin-top: 10px; }
+  .aviso { margin-top: 10px; padding: 9px 10px; font-size: .86rem; color: #4a3112; background: rgba(194,139,72,.14); border-left: 2px solid var(--ambar); display: flex; align-items: center; gap: 8px; }
+  .muerte { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 10px; font-size: .85rem; padding: 10px 0; border-top: 1px solid var(--line); }
+  .slots { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+  .slots .row span { width: 40px; font-size: .74rem; color: var(--tinta-suave); }
+  details summary { color: var(--tinta-suave); font-size: .84rem; margin-top: 10px; }
+  .vacio { text-align: center; color: var(--tinta-suave); padding: 30px 10px; }
+
+  /* Dados */
+  .bandeja { padding: 34px 16px 26px; margin: 4px 0 20px; text-align: center; }
+  .resultado { font-family: var(--f-titulo); font-size: 4.2rem; font-weight: 400; line-height: 1; color: var(--manuscrito); }
+  .detalle { color: #c9d1c4; font-size: .86rem; min-height: 1.3em; margin-top: 8px; }
+  .dados { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+  .dados button { min-height: 60px !important; font: 500 1.3rem var(--f-titulo) !important; letter-spacing: 0 !important; text-transform: none !important; }
+  .hist div { padding: 7px 0; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 8px; font-size: .88rem; color: var(--tinta-suave); }
+  .hist b { color: var(--tinta); }
+  .seg { display: inline-flex; border: 1px solid var(--oro-linea); }
+  .seg button { border: 0; padding: 9px 12px; font: 600 .64rem var(--f-texto); letter-spacing: .12em; text-transform: uppercase; cursor: pointer; color: var(--crema-suave); background: transparent; }
+  .seg button + button { border-left: 1px solid var(--oro-linea); }
+  .seg button.on { color: #1A140F; background: var(--oro); }
+  .etiqueta-mesa { color: var(--crema-suave); font: 600 .64rem var(--f-texto); letter-spacing: .14em; text-transform: uppercase; }
+
+  /* Referencia */
+  .cond { padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .cond b { font-family: var(--f-titulo); font-size: 1.3rem; font-weight: 600; color: var(--tinta); }
+  .cond p { margin: 4px 0 0; font-size: .9rem; line-height: 1.55; }
+  .pie { color: var(--crema-suave); font-size: .74rem; text-align: center; margin: 24px 0 6px; }
+
+  /* Aventura activa: placa oscura con doble filete */
+  .portada { padding: 22px 22px 20px; margin-bottom: 16px; }
+  .portada .nombre { font-size: 2rem; font-weight: 400; color: var(--crema); display: flex; align-items: center; gap: 12px; }
+  .portada .nombre .ico { color: var(--oro); width: 1em; height: 1em; }
+  .portada .stat { color: var(--crema-suave); }
+  .portada label.f { color: var(--crema-suave); }
+  details.card > summary { font-family: var(--f-titulo); font-size: 1.45rem; font-weight: 500; color: var(--tinta); margin: 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  details.card > summary::before { order: 9; margin-left: auto; font-size: 1.2rem; color: var(--borgona); }
+  details.card > summary .ico { color: var(--borgona); }
+  .card details.card > summary { font-size: 1.2rem; gap: 4px 8px; }
+  .card details.card > summary b { display: inline-flex; align-items: center; gap: 6px; font-weight: 500; }
+  .card details.card > summary .stat { font-family: var(--f-texto); font-size: .76rem; }
+  .reloj-paso { display: flex; align-items: flex-start; gap: 10px; margin: 8px 0; cursor: pointer; flex-wrap: nowrap; }
+  .final { display: flex; gap: 10px; align-items: baseline; margin: 8px 0; }
+  .final .estampa { flex: none; min-width: 92px; text-align: center; }
+
+  /* Kit */
+  .nota-kit { border-left: 2px solid var(--oro-linea); }
+  .nota-kit.nueva { border-left-color: var(--borgona); }
+  dialog .grid { gap: 10px; }
+
+  @media (min-width: 980px) {
+    body { padding-bottom: 0; padding-left: 104px; }
+    nav.marcas { top: 0; bottom: 0; right: auto; width: 96px; flex-direction: column; justify-content: flex-start; gap: 4px; padding: 84px 0 16px;
+      border-top: 0; border-right: 1px solid rgba(195,160,106,.18); }
+    nav.marcas button { flex: none; padding: 14px 4px; }
+    nav.marcas button.on::before { top: 22%; bottom: 22%; left: -1px; right: auto; width: 2px; height: auto; }
+    header.cab { padding-left: 26px; }
+    main { max-width: 1120px; padding: 28px 32px; }
+    #lista-combate { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 18px; align-items: start; }
+    #lista-combate .card { margin-top: 10px; }
+    #t-kit.on { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; align-items: start; }
+    #t-kit > .col { min-width: 0; }
+    #lista-cond { columns: 2; column-gap: 40px; } #lista-cond .cond { break-inside: avoid; }
+    .toast { bottom: 30px; }
   }
-  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  html,body { margin:0; background:var(--bg); color:var(--txt); font-family:system-ui,-apple-system,"Segoe UI",sans-serif; }
-  body { padding-bottom:70px; }
-  header { position:sticky; top:0; z-index:5; background:var(--bg); border-bottom:1px solid var(--line); padding:10px 14px; display:flex; align-items:center; gap:10px; }
-  header h1 { font-size:1.05rem; margin:0; flex:1; }
-  header .ronda { font-size:.85rem; color:var(--mut); }
-  nav { position:fixed; bottom:0; left:0; right:0; z-index:5; display:flex; background:#1b1720; border-top:1px solid var(--line); padding-bottom:env(safe-area-inset-bottom); }
-  nav button { flex:1; background:none; border:0; color:var(--mut); padding:10px 0 12px; font-size:.75rem; display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer; }
-  nav button span { font-size:1.25rem; }
-  nav button.on { color:var(--acc); }
-  main { max-width:760px; margin:0 auto; padding:12px; }
-  .tab { display:none; } .tab.on { display:block; }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:10px; }
-  .card.turno { border-color:var(--acc); box-shadow:0 0 0 1px var(--acc) inset; }
-  .card.caido { opacity:.65; }
-  h2 { font-size:1rem; margin:4px 0 10px; color:var(--acc); }
-  h3 { font-size:.9rem; margin:12px 0 6px; color:var(--mut); font-weight:600; }
-  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-  .grow { flex:1; min-width:0; }
-  .between { justify-content:space-between; }
-  button.b { background:var(--card2); color:var(--txt); border:1px solid var(--line); border-radius:9px; padding:9px 12px; font-size:.9rem; cursor:pointer; }
-  button.b:active { transform:scale(.97); }
-  button.p { background:var(--acc); color:#1b1408; border-color:var(--acc); font-weight:700; }
-  button.dmg { background:#4a2326; border-color:#6b2d31; }
-  button.heal { background:#203d2a; border-color:#2d5a3b; }
-  button.tmp { background:#2b2a4a; border-color:#3e3c6b; }
-  button.s { padding:6px 9px; font-size:.8rem; }
-  button.x { background:none; border:0; color:var(--mut); font-size:1.1rem; cursor:pointer; padding:4px 6px; }
-  input, select, textarea { background:#120f16; color:var(--txt); border:1px solid var(--line); border-radius:8px; padding:8px; font-size:16px; font-family:inherit; }
-  input[type=number] { width:64px; }
-  input.w { width:100%; }
-  label.f { display:flex; flex-direction:column; gap:3px; font-size:.75rem; color:var(--mut); }
-  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:8px; }
-  .nombre { font-weight:700; font-size:1rem; }
-  .badge { font-size:.68rem; padding:2px 7px; border-radius:20px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; }
-  .b-pj { background:var(--pj); color:#0b1424; } .b-enemigo { background:var(--en); color:#240b0b; } .b-aliado { background:var(--al); color:#0b2412; }
-  .ini { width:48px; text-align:center; font-weight:700; font-size:1.05rem; }
-  .stat { font-size:.8rem; color:var(--mut); }
-  .stat b { color:var(--txt); font-size:.95rem; }
-  .barra { height:8px; background:#120f16; border-radius:6px; overflow:hidden; margin:8px 0 6px; }
-  .barra i { display:block; height:100%; background:var(--ok); transition:width .25s; }
-  .barra i.m { background:var(--warn); } .barra i.l { background:var(--err); }
-  .chips { display:flex; flex-wrap:wrap; gap:5px; margin-top:6px; }
-  .chip { font-size:.75rem; background:var(--card2); border:1px solid var(--line); border-radius:20px; padding:3px 9px; cursor:pointer; }
-  .chip.on { background:var(--acc2); border-color:var(--acc2); color:#fff; }
-  .chip.conc { background:#5a4a1c; border-color:var(--acc); }
-  .aviso { background:#3a2e12; border:1px solid var(--acc); border-radius:8px; padding:8px; font-size:.85rem; margin-top:8px; }
-  .muerte { display:flex; gap:12px; align-items:center; margin-top:8px; font-size:.85rem; }
-  .pips { display:inline-flex; gap:4px; }
-  .pip { width:20px; height:20px; border-radius:50%; border:2px solid var(--line); background:#120f16; cursor:pointer; padding:0; }
-  .pip.ok { background:var(--ok); border-color:var(--ok); } .pip.ko { background:var(--err); border-color:var(--err); }
-  .pip.slot { border-radius:5px; } .pip.slot.usado { background:#120f16; } .pip.slot.libre { background:var(--acc2); border-color:var(--acc2); }
-  .slots { display:flex; flex-direction:column; gap:6px; margin-top:6px; }
-  .slots .row span { width:40px; font-size:.8rem; color:var(--mut); }
-  details summary { cursor:pointer; color:var(--mut); font-size:.85rem; margin-top:8px; }
-  .vacio { text-align:center; color:var(--mut); padding:24px 10px; font-size:.95rem; }
-  .dados { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
-  .dados button { padding:16px 0; font-size:1.05rem; font-weight:700; }
-  .resultado { font-size:2.6rem; font-weight:800; text-align:center; color:var(--acc); margin:8px 0 2px; }
-  .detalle { text-align:center; color:var(--mut); font-size:.85rem; min-height:1.2em; }
-  .hist { font-size:.85rem; color:var(--mut); }
-  .hist div { padding:5px 0; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; gap:8px; }
-  .hist b { color:var(--txt); }
-  .cond { padding:10px 0; border-bottom:1px solid var(--line); }
-  .cond b { color:var(--acc); }
-  .cond p { margin:4px 0 0; font-size:.88rem; color:#d5cddf; line-height:1.4; }
-  dialog { background:var(--card); color:var(--txt); border:1px solid var(--line); border-radius:14px; padding:16px; width:min(94vw,460px); }
-  dialog::backdrop { background:rgba(0,0,0,.6); }
-  .toast { position:fixed; left:50%; bottom:80px; transform:translateX(-50%); background:var(--card2); border:1px solid var(--acc); color:var(--txt); padding:10px 16px; border-radius:10px; font-size:.9rem; z-index:20; opacity:0; transition:opacity .2s; pointer-events:none; max-width:90vw; text-align:center; }
-  .toast.on { opacity:1; }
-  .seg { display:inline-flex; border:1px solid var(--line); border-radius:9px; overflow:hidden; }
-  .seg button { background:var(--card2); color:var(--mut); border:0; padding:8px 12px; font-size:.85rem; cursor:pointer; }
-  .seg button.on { background:var(--acc2); color:#fff; }
-  .pie { color:var(--mut); font-size:.72rem; text-align:center; margin:20px 0 4px; }
 </style>
+
+
 </head>
 <body>
 
-<header>
-  <h1>🐉 Panel DM</h1>
+<script src="ui.js"></script>
+<header class="cab">
+  <a class="casa" href="index.html" aria-label="Volver al inicio"><svg class="ico g" aria-hidden="true"><use href="#i-casa"/></svg></a>
+  <h1>Panel del DM</h1>
+  <span id="lectura"></span>
   <span class="ronda" id="ronda"></span>
 </header>
 
 <main>
   <!-- COMBATE -->
   <section class="tab on" id="t-combate">
-    <div class="row" style="margin-bottom:10px">
-      <button class="b p grow" data-act="sig-turno">Siguiente turno ▶</button>
-      <button class="b" data-act="abrir-anadir">+ Añadir</button>
+    <div class="barra-acciones">
+      <button class="b p grow" data-act="sig-turno">Siguiente turno <svg class="ico"><use href="#i-siguiente"/></svg></button>
+      <button class="b" data-act="abrir-anadir"><svg class="ico"><use href="#i-mas"/></svg>Añadir</button>
     </div>
-    <div class="row" style="margin-bottom:12px">
+    <div class="barra-acciones">
       <button class="b s" data-act="grupo-al-combate">Traer al grupo</button>
       <button class="b s" data-act="tirar-ini">Tirar iniciativa (sin valor)</button>
       <button class="b s" data-act="ordenar">Ordenar</button>
@@ -109,10 +173,56 @@
     <div id="lista-combate"></div>
   </section>
 
+  <!-- AVENTURA -->
+  <section class="tab" id="t-aventura"><div id="vista-aventura"></div></section>
+
+  <!-- KIT -->
+  <section class="tab" id="t-kit">
+   <div class="col">
+    <div class="card">
+      <h2>Generar al instante</h2>
+      <div class="row" style="margin-bottom:8px">
+        <label class="f grow">Especie para nombres
+          <select id="kit-especie" class="w"></select>
+        </label>
+      </div>
+      <div class="grid">
+        <button class="b p" data-kit="npc"><svg class="ico"><use href="#i-persona"/></svg>NPC</button>
+        <button class="b" data-kit="nombre"><svg class="ico"><use href="#i-etiqueta"/></svg>Nombre</button>
+        <button class="b" data-kit="reto"><svg class="ico"><use href="#i-montana"/></svg>Reto</button>
+        <button class="b" data-kit="acertijo"><svg class="ico"><use href="#i-pregunta"/></svg>Acertijo</button>
+        <button class="b" data-kit="complicacion"><svg class="ico"><use href="#i-rayo"/></svg>Complicación</button>
+        <button class="b" data-kit="rumor"><svg class="ico"><use href="#i-burbuja"/></svg>Rumor</button>
+        <button class="b" data-kit="objeto"><svg class="ico"><use href="#i-gema"/></svg>Objeto curioso</button>
+        <button class="b" data-kit="botin"><svg class="ico"><use href="#i-moneda"/></svg>Botín</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Monstruo rápido al combate</h2>
+      <div class="row">
+        <select id="kit-mon" class="grow"></select>
+        <input type="number" id="kit-cant" value="1" min="1" max="20" aria-label="Cantidad">
+        <button class="b p" data-act="mon-rapido">Añadir</button>
+      </div>
+      <p class="stat" id="kit-mon-info" style="margin-top:8px"></p>
+    </div>
+    <div class="card">
+      <h2>Presupuesto de encuentro</h2>
+      <div class="row">
+        <label class="f">Jugadores<input type="number" id="pres-n" value="4" min="1" max="20"></label>
+        <label class="f">Nivel<select id="pres-nv"></select></label>
+      </div>
+      <div id="pres-res" class="stat" style="margin-top:8px"></div>
+      <p class="stat">PX por VD: 1/8 = 25 · 1/4 = 50 · 1/2 = 100 · 1 = 200 · 2 = 450 · 3 = 700. Más de 2 criaturas por PJ: usa criaturas frágiles.</p>
+    </div>
+   </div>
+   <div class="col"><div id="kit-res"></div></div>
+  </section>
+
   <!-- GRUPO -->
   <section class="tab" id="t-grupo">
-    <div class="row" style="margin-bottom:12px">
-      <button class="b p grow" data-act="nuevo-pj">+ Nuevo personaje</button>
+    <div class="barra-acciones">
+      <button class="b p grow" data-act="nuevo-pj"><svg class="ico"><use href="#i-mas"/></svg>Nuevo personaje</button>
       <button class="b" data-act="descanso-largo-todos">Descanso largo (todos)</button>
     </div>
     <div id="lista-grupo"></div>
@@ -120,12 +230,12 @@
 
   <!-- DADOS -->
   <section class="tab" id="t-dados">
-    <div class="card">
+    <div class="fieltro bandeja">
       <div class="resultado" id="res">—</div>
-      <div class="detalle" id="res-det"></div>
+      <div class="detalle" id="res-det">Toca un dado para tirar</div>
     </div>
-    <div class="row" style="margin-bottom:10px">
-      <span class="stat">d20:</span>
+    <div class="row" style="margin-bottom:12px">
+      <span class="etiqueta-mesa">Modo del d20:</span>
       <div class="seg" id="modo-d20">
         <button data-modo="normal" class="on">Normal</button>
         <button data-modo="ventaja">Ventaja</button>
@@ -162,11 +272,13 @@
   </section>
 </main>
 
-<nav>
-  <button data-tab="combate" class="on"><span>⚔️</span>Combate</button>
-  <button data-tab="grupo"><span>🛡️</span>Grupo</button>
-  <button data-tab="dados"><span>🎲</span>Dados</button>
-  <button data-tab="cond"><span>📖</span>Referencia</button>
+<nav class="marcas" aria-label="Secciones del panel">
+  <button data-tab="aventura"><svg class="ico" aria-hidden="true"><use href="#i-mapa"/></svg>Aventura</button>
+  <button data-tab="combate" class="on"><svg class="ico" aria-hidden="true"><use href="#i-espadas"/></svg>Combate</button>
+  <button data-tab="grupo"><svg class="ico" aria-hidden="true"><use href="#i-escudo"/></svg>Grupo</button>
+  <button data-tab="kit"><svg class="ico" aria-hidden="true"><use href="#i-farol"/></svg>Kit</button>
+  <button data-tab="dados"><svg class="ico" aria-hidden="true"><use href="#i-dado"/></svg>Dados</button>
+  <button data-tab="cond"><svg class="ico" aria-hidden="true"><use href="#i-libro"/></svg>Reglas</button>
 </nav>
 
 <!-- Diálogo: añadir combatiente -->
@@ -228,6 +340,7 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="datos.js"></script>
 <script>
 /* ============ DATOS DE REFERENCIA (SRD 5.2.1, traducción propia) ============ */
 const CONDICIONES = [
@@ -250,7 +363,7 @@ const AGOTAMIENTO_TXT = "Acumulativo: cada nivel resta 2 a todas tus tiradas d20
 
 /* ============ ESTADO + GUARDADO LOCAL ============ */
 const CLAVE = "mesa-dnd-dm-v1";
-const nuevoEstado = () => ({ grupo:{}, combate:{ ronda:0, turno:0, lista:[] }, historial:[] });
+const nuevoEstado = () => ({ grupo:{}, combate:{ ronda:0, turno:0, lista:[] }, historial:[], aventura:null, kit:[] });
 let E;
 try { E = JSON.parse(localStorage.getItem(CLAVE)) || nuevoEstado(); } catch { E = nuevoEstado(); }
 function guardar() { try { localStorage.setItem(CLAVE, JSON.stringify(E)); } catch {} }
@@ -267,8 +380,8 @@ const num = (v, def = 0) => { const n = parseInt(v, 10); return Number.isFinite(
 const fuente = c => (c.ref && E.grupo[c.ref]) ? E.grupo[c.ref] : c;
 
 /* ============ COMBATE ============ */
-function anadirCombatiente({ nombre, tipo, pg, ca, bono, ini, ref = null }) {
-  const c = { id: uid(), nombre, tipo, ini: ini ?? null, bono: bono || 0, ref,
+function anadirCombatiente({ nombre, tipo, pg, ca, bono, ini, ref = null, acc = "", vel = "" }) {
+  const c = { id: uid(), nombre, tipo, ini: ini ?? null, bono: bono || 0, ref, acc, vel,
               condiciones: {}, agot: 0, conc: false, muerte: { ok: 0, ko: 0 } };
   if (!ref) { c.pg = pg; c.pgMax = pg; c.pgTemp = 0; c.ca = ca; }
   E.combate.lista.push(c);
@@ -321,8 +434,116 @@ function render() {
   guardar();
   const C = E.combate;
   $("#ronda").textContent = C.ronda ? `Ronda ${C.ronda}` : "Sin combate";
-  renderCombate(); renderGrupo(); renderHist();
+  $("#ronda").classList.toggle("activa", !!C.ronda);
+  renderCombate(); renderGrupo(); renderHist(); renderAventura(); renderKit();
 }
+
+/* ============ AVENTURA ============ */
+const avActual = () => E.aventura && AVENTURAS.find(a => a.id === E.aventura.id);
+function renderAventura() {
+  const el = $("#vista-aventura"), A = avActual();
+  if (!A) {
+    el.innerHTML = `<div class="card"><h2>Elige la aventura de hoy</h2><p class="stat">Puedes enseñar la portada a tus jugadores para que voten. Todas son para nivel 1 y se ajustan al número de jugadores.</p></div>` +
+      AVENTURAS.map(a => `<div class="card"><div class="nombre row" style="gap:8px">${ico(a.icono)}${esc(a.titulo)}</div>
+        <div class="stat">${esc(a.tono)} · ${a.duracion} · ${esc(a.jugadores)} jugadores</div>
+        <p style="font-size:.9rem;line-height:1.45;margin:8px 0">${esc(a.teaser)}</p>
+        <button class="b p" data-act="av-elegir" data-av="${a.id}">Jugar esta aventura</button></div>`).join("");
+    return;
+  }
+  const S = E.aventura, n = S.jugadores, nv = S.nivel;
+  const bloque = (titulo, cuerpo, abierto = false) => `<details class="card" ${abierto ? "open" : ""}><summary>${titulo}</summary><div style="margin-top:10px;font-size:.92rem;line-height:1.5">${cuerpo}</div></details>`;
+  const li = arr => `<ul style="margin:4px 0;padding-left:18px">${arr.map(x => `<li>${esc(x)}</li>`).join("")}</ul>`;
+  const reloj = A.reloj.map((r, i) => `<label class="reloj-paso">
+      <input type="checkbox" data-reloj="${i}" ${S.reloj[i] ? "checked" : ""} style="width:20px;height:20px;margin-top:2px">
+      <span style="${S.reloj[i] ? "color:var(--mut);text-decoration:line-through" : ""}"><b>${i + 1}.</b> ${esc(r)}</span></label>`).join("");
+  const pasos = S.reloj.filter(Boolean).length;
+  const nodos = A.nodos.map((nd, i) => `<details class="card" style="background:var(--card2)">
+      <summary><b style="color:var(--txt)">${ico(S.visitados[i] ? "check" : "brujula")} ${esc(nd.n)}</b> <span class="stat">· ${esc(nd.tipo)}</span></summary>
+      <div style="margin-top:8px;font-size:.9rem;line-height:1.5">
+        <p><b>Qué es:</b> ${esc(nd.que)}</p><p><b>Al llegar:</b> <i>${esc(nd.sensorial)}</i></p>
+        <p><b>Quién está:</b> ${esc(nd.quien)}</p><p><b>Reto:</b> ${esc(nd.reto)}</p>
+        <p><b>Pistas que salen de aquí:</b></p>${li(nd.pistas)}
+        <p><b>Si la mesa es grande:</b> ${esc(nd.grande)}</p>
+        <label class="row" style="gap:8px"><input type="checkbox" data-visitado="${i}" ${S.visitados[i] ? "checked" : ""}> Ya lo visitaron</label>
+      </div></details>`).join("");
+  const elenco = A.elenco.map(([nom, rol, quiere, tic, presion]) => `<div style="padding:8px 0;border-bottom:1px solid var(--line)">
+      <b>${esc(nom)}</b> <span class="stat">· ${esc(rol)}</span><br>
+      <span class="stat">Quiere:</span> ${esc(quiere)}<br><span class="stat">Tic:</span> ${esc(tic)}<br><span class="stat">Si lo presionan:</span> ${esc(presion)}</div>`).join("");
+  const encs = A.encuentros.map(enc => {
+    const R = escalarEncuentro(enc, n, nv);
+    const col = { baja:"var(--ok)", moderada:"var(--warn)", alta:"var(--err)", "por encima de alta":"#ff4f8b" }[R.real];
+    return `<div class="card" style="background:var(--card2)">
+      <div class="row between"><b>${esc(enc.nombre)}</b><span class="badge" style="background:${col};color:#160d10">${R.real}</span></div>
+      <ul style="margin:8px 0;padding-left:18px;font-size:.9rem">${R.lista.map(x => { const M = MONSTRUOS[x.m];
+        return `<li>${x.cant} × <b>${esc(x.nombre)}</b> <span class="stat">(CA ${M[1]}, PG ${x.pg}${x.jefe ? " ajustados" : ""}, VD ${M[4]})</span></li>`; }).join("")}</ul>
+      <div class="stat">≈ ${R.px} PX · Presupuesto para ${n}: baja ${R.pres.baja} · moderada ${R.pres.moderada} · alta ${R.pres.alta}</div>
+      ${enc.nota ? `<p class="stat" style="margin:6px 0"><b>Consejo:</b> ${esc(enc.nota)}</p>` : ""}
+      <button class="b p s" data-act="av-cargar" data-enc="${enc.id}" style="margin-top:6px">${ico("espadas")} Cargar al combate</button></div>`;
+  }).join("");
+  const C = A.climax;
+  el.innerHTML = `
+    <div class="cuero portada">
+      <div class="row between"><div class="nombre">${ico(A.icono)}${esc(A.titulo)}</div><button class="b s" data-act="av-cambiar">Cambiar</button></div>
+      <div class="stat">${esc(A.tono)} · ${A.duracion}</div>
+      <div class="row" style="margin-top:10px">
+        <label class="f">Jugadores<input type="number" min="1" max="20" value="${n}" data-av-campo="jugadores"></label>
+        <label class="f">Nivel<select data-av-campo="nivel">${[1,2,3,4,5].map(x => `<option ${x === nv ? "selected" : ""}>${x}</option>`).join("")}</select></label>
+        <button class="b s" data-act="av-contar" style="align-self:flex-end">Contar mi grupo</button>
+      </div>
+      ${nv > 1 ? `<p class="stat" style="margin:8px 0 0">Nota: la aventura está escrita para nivel 1. A nivel ${nv}, los encuentros salen más fáciles: añade monstruos desde el Kit si hace falta.</p>` : ""}
+    </div>
+    ${bloque(`${ico("pluma")} Núcleo`, `<p><b>Para leer a los jugadores:</b> <i>${esc(A.teaser)}</i></p><p><b>Premisa (secreta):</b> ${esc(A.premisa)}</p><p><b>Gancho:</b> ${esc(A.gancho)}</p><p><b>Objetivo:</b> ${esc(A.objetivo)}</p><p><b>Giro:</b> ${esc(A.giro)}</p>`, true)}
+    ${bloque(`${ico("reloj")} Reloj del villano <span class="stat">(${pasos}/6)</span>`, `<p class="stat">Avanza un paso si pierden mucho tiempo, descansan o fallan algo importante de forma ruidosa.</p>${reloj}`, true)}
+    <div class="card"><h2>Nodos <span class="stat">· sin orden fijo</span></h2>${nodos}</div>
+    ${bloque(`${ico("mascara")} Elenco`, elenco)}
+    <div class="card"><h2>Encuentros <span class="stat">· ajustados a ${n} jugadores</span></h2>${encs}</div>
+    ${bloque(`${ico("llama")} Clímax`, `<p><b>Lugar:</b> ${esc(C.lugar)}</p><p><b>Qué lo hace especial:</b> ${esc(C.especial)}</p><p><b>Finales:</b></p>${C.finales.map((f, i) => `<div class="final"><span class="estampa ${["bosque","ambar","borgona"][i]}">${["Éxito","Con costo","Fracaso"][i]}</span><span>${esc(f)}</span></div>`).join("")}<p class="stat">Al terminar: un epílogo de un minuto por jugador: "¿qué hace tu personaje al día siguiente?"</p>`)}
+    ${bloque(`${ico("cofre")} Recompensas`, esc(A.recompensas))}`;
+}
+function cargarEncuentro(encId) {
+  const A = avActual(), enc = A.encuentros.find(e => e.id === encId);
+  const R = escalarEncuentro(enc, E.aventura.jugadores, E.aventura.nivel);
+  R.lista.forEach(x => {
+    const M = MONSTRUOS[x.m];
+    for (let i = 1; i <= x.cant; i++) anadirCombatiente({
+      nombre: x.cant > 1 ? `${x.nombre} ${i}` : x.nombre, tipo: "enemigo", pg: x.pg, ca: M[1],
+      bono: M[3], ini: d(20) + M[3], acc: M[7], vel: M[6] });
+  });
+  if (E.combate.ronda > 0) ordenar();
+  toast(`${R.lista.reduce((s, x) => s + x.cant, 0)} enemigos al combate. Trae al grupo y tira iniciativa.`);
+  irATab("combate");
+}
+
+/* ============ KIT ============ */
+function renderKit() {
+  const el = $("#kit-res");
+  if (!(E.kit || []).length) { el.innerHTML = `<div class="card vacio"><div class="titulo">Tus notas aparecen aquí</div>Usa los botones para generar un NPC, un reto o un acertijo al vuelo.</div>`; return; }
+  el.innerHTML = (E.kit || []).map((k, i) => `<div class="card nota-kit ${i === 0 ? "nueva" : ""}">
+    <div class="row between"><b class="row" style="gap:6px">${/^[a-z]+$/.test(k.ico) ? ico(k.ico) : ""}${esc(k.t)}</b><button class="x" data-act="kit-quitar" data-i="${i}" aria-label="Quitar nota">${ico("cerrar")}</button></div>
+    <div style="font-size:.92rem;line-height:1.5;margin-top:4px">${k.html}</div></div>`).join("");
+}
+function kitGenerar(tipo) {
+  const K = KIT, nombre = () => al(K.nombres[$("#kit-especie").value] || K.nombres.Humano);
+  let r;
+  switch (tipo) {
+    case "npc": r = { ico:"persona", t:`${nombre()} — ${al(K.rol)}`, html:
+      `<span class="stat">Rasgo:</span> ${al(K.rasgo)}<br><span class="stat">Quiere:</span> ${al(K.quiere)}<br><span class="stat">Secreto:</span> ${al(K.secreto)}<br><span class="stat">Tic:</span> ${al(K.tic)}<br><span class="stat">Actitud:</span> <b>${al(K.actitud)}</b>` }; break;
+    case "nombre": r = { ico:"etiqueta", t:"Nombre", html:`<b style="font-size:1.1rem">${nombre()}</b> · ${nombre()} · ${nombre()}` }; break;
+    case "reto": { const [o, t, a] = al(K.retos); r = { ico:"montana", t:o, html:`<span class="stat">Tirada:</span> ${t}<br><span class="stat">Alternativas:</span> ${a}<br><span class="stat">Si fallan: lo logran con un costo (daño, tiempo, ruido).</span>` }; break; }
+    case "acertijo": { const [q, s, p] = al(K.acertijos); r = { ico:"pregunta", t:"Acertijo", html:`<i>"${q}"</i><details><summary>Pistas</summary>${p}</details><details><summary>Respuesta</summary><b>${s}</b></details>` }; break; }
+    case "complicacion": r = { ico:"rayo", t:"Complicación", html: al(K.complicaciones) }; break;
+    case "rumor": r = { ico:"burbuja", t:"Rumor", html:`"${al(K.rumores)}"` }; break;
+    case "objeto": r = { ico:"gema", t:"Objeto curioso", html: al(K.objetos) }; break;
+    case "botin": { const a = d(6), b = d(6); r = { ico:"moneda", t:"Botín", html:`<b>${(a + b) * 5} po</b> <span class="stat">(2d6 × 5: [${a}, ${b}])</span> + ${al(K.objetos).toLowerCase()}` }; break; }
+  }
+  E.kit = [r, ...(E.kit || [])].slice(0, 12);
+}
+function renderPresupuesto() {
+  const n = Math.max(1, num($("#pres-n").value, 4)), P = PX_POR_PJ[num($("#pres-nv").value, 1)];
+  $("#pres-res").innerHTML = `Baja <b>${P.baja * n}</b> · Moderada <b>${P.moderada * n}</b> · Alta <b>${P.alta * n}</b> PX`;
+}
+function irATab(t) { document.querySelector(`nav button[data-tab="${t}"]`).click(); }
+const al = arr => arr[Math.floor(Math.random() * arr.length)];
 function barra(f) {
   const p = f.pgMax ? Math.max(0, Math.min(100, f.pg / f.pgMax * 100)) : 0;
   return `<div class="barra"><i class="${p <= 25 ? "l" : p <= 50 ? "m" : ""}" style="width:${p}%"></i></div>`;
@@ -346,7 +567,7 @@ function renderCombate() {
     const conds = Object.keys(c.condiciones).filter(k => c.condiciones[k]);
     const chips = conds.map(k => `<span class="chip on" data-act="ver-cond" data-id="${c.id}">${esc(k)}</span>`).join("")
       + (c.agot ? `<span class="chip on" data-act="ver-cond" data-id="${c.id}">Agotamiento ${c.agot}</span>` : "")
-      + `<span class="chip ${c.conc ? "conc" : ""}" data-act="conc" data-id="${c.id}">${c.conc ? "🔮 Concentrando" : "Concentración"}</span>`
+      + `<span class="chip ${c.conc ? "conc" : ""}" data-act="conc" data-id="${c.id}">${c.conc ? "Concentrando" : "Concentración"}</span>`
       + `<span class="chip" data-act="ver-cond" data-id="${c.id}">+ condición</span>`;
     const muerte = (c.tipo === "pj" && f.pg === 0) ? `
       <div class="muerte">
@@ -355,16 +576,16 @@ function renderCombate() {
         <span class="pips">${[0,1,2].map(i => `<button class="pip ${i < c.muerte.ko ? "ko" : ""}" data-act="muerte" data-t="ko" data-id="${c.id}" data-i="${i}" aria-label="Fallo"></button>`).join("")}</span>
         ${c.muerte.ok >= 3 ? "<b style='color:var(--ok)'>Estable</b>" : c.muerte.ko >= 3 ? "<b style='color:var(--err)'>Muerto</b>" : ""}
       </div>` : "";
-    const aviso = c._avisoConc ? `<div class="aviso">⚠️ ${esc(c._avisoConc)} <button class="x" data-act="ok-aviso" data-id="${c.id}">✕</button></div>` : "";
+    const aviso = c._avisoConc ? `<div class="aviso">${ico("vela")}<span class="grow">${esc(c._avisoConc)}</span><button class="x" data-act="ok-aviso" data-id="${c.id}" aria-label="Cerrar aviso">${ico("cerrar")}</button></div>` : "";
     return `
     <div class="card ${turno ? "turno" : ""} ${f.pg <= 0 ? "caido" : ""}">
       <div class="row">
         <input class="ini" type="number" value="${c.ini ?? ""}" data-campo="ini" data-id="${c.id}" aria-label="Iniciativa">
         <div class="grow">
-          <div class="row"><span class="nombre">${turno ? "▶ " : ""}${esc(c.nombre)}</span><span class="badge b-${c.tipo}">${c.tipo}</span></div>
+          <div class="row"><span class="nombre">${esc(c.nombre)}</span><span class="badge b-${c.tipo}">${c.tipo}</span></div>
           <div class="stat">CA <b>${f.ca}</b> · PG <b>${f.pg}</b>/${f.pgMax}${f.pgTemp ? ` <span style="color:#9b97ff">+${f.pgTemp} temp</span>` : ""}</div>
         </div>
-        <button class="x" data-act="quitar" data-id="${c.id}" aria-label="Quitar">✕</button>
+        <button class="x" data-act="quitar" data-id="${c.id}" aria-label="Quitar del combate">${ico("cerrar")}</button>
       </div>
       ${barra(f)}
       <div class="row">
@@ -376,6 +597,7 @@ function renderCombate() {
       <div class="chips">${chips}</div>
       ${aviso}${muerte}
       ${c.ref ? (Object.values(f.espacios || {}).some(s => s.max) ? `<details><summary>Espacios de conjuro</summary>${slotsHTML(f, "pj")}</details>` : "") : ""}
+      ${c.acc ? `<details><summary>Acciones${c.vel ? ` · velocidad ${esc(c.vel)}` : ""}</summary><p class="stat" style="margin:6px 0 0;line-height:1.45">${esc(c.acc)}</p></details>` : ""}
     </div>`;
   }).join("");
 }
@@ -494,8 +716,9 @@ function descansoLargo(p) {
 
 /* ============ EVENTOS ============ */
 document.addEventListener("click", e => {
-  const t = e.target.closest("[data-act],[data-tab],[data-dado],[data-modo]");
+  const t = e.target.closest("[data-act],[data-tab],[data-dado],[data-modo],[data-kit]");
   if (!t) return;
+  if (t.dataset.kit) { kitGenerar(t.dataset.kit); return render(); }
   if (t.dataset.tab) {
     document.querySelectorAll("nav button").forEach(b => b.classList.toggle("on", b === t));
     document.querySelectorAll(".tab").forEach(s => s.classList.toggle("on", s.id === "t-" + t.dataset.tab));
@@ -508,6 +731,26 @@ document.addEventListener("click", e => {
   }
   const id = t.dataset.id, c = id ? E.combate.lista.find(x => x.id === id) : null;
   switch (t.dataset.act) {
+    case "av-elegir":
+      E.aventura = { id: t.dataset.av, reloj: [false,false,false,false,false,false], visitados: {},
+                     jugadores: Math.max(1, Object.keys(E.grupo).length || 4), nivel: 1 };
+      window.scrollTo(0, 0); break;
+    case "av-cambiar":
+      if (!confirm("¿Cambiar de aventura? Se borra el progreso del reloj y de los nodos.")) return;
+      E.aventura = null; break;
+    case "av-cargar": cargarEncuentro(t.dataset.enc); break;
+    case "av-contar": {
+      const n = Object.keys(E.grupo).length;
+      if (!n) return toast("No hay personajes en el Grupo todavía.");
+      E.aventura.jugadores = n; toast(`Ajustado a ${n} jugadores.`); break;
+    }
+    case "kit-quitar": E.kit.splice(+t.dataset.i, 1); break;
+    case "mon-rapido": {
+      const k = $("#kit-mon").value, M = MONSTRUOS[k], cant = Math.min(20, Math.max(1, num($("#kit-cant").value, 1)));
+      for (let i = 1; i <= cant; i++) anadirCombatiente({ nombre: cant > 1 ? `${M[0]} ${i}` : M[0], tipo: "enemigo",
+        pg: M[2], ca: M[1], bono: M[3], ini: d(20) + M[3], acc: M[7], vel: M[6] });
+      toast(`${cant} × ${M[0]} al combate.`); break;
+    }
     case "sig-turno": siguienteTurno(); break;
     case "ordenar": ordenar(); break;
     case "abrir-anadir": $("#dlg-anadir").showModal(); setTimeout(() => $("#a-nombre").focus(), 50); return;
@@ -594,6 +837,11 @@ document.addEventListener("click", e => {
 });
 document.addEventListener("change", e => {
   const t = e.target;
+  if (t.dataset.reloj !== undefined) { E.aventura.reloj[+t.dataset.reloj] = t.checked; return render(); }
+  if (t.dataset.visitado !== undefined) { E.aventura.visitados[+t.dataset.visitado] = t.checked; return render(); }
+  if (t.dataset.avCampo) { E.aventura[t.dataset.avCampo] = Math.max(1, num(t.value, 1)); return render(); }
+  if (t.id === "kit-mon") return infoMon();
+  if (t.id === "pres-n" || t.id === "pres-nv") return renderPresupuesto();
   if (t.dataset.campo === "ini") {
     const c = E.combate.lista.find(x => x.id === t.dataset.id);
     if (c) { c.ini = t.value === "" ? null : num(t.value); guardar(); }
@@ -610,6 +858,18 @@ $("#archivo").addEventListener("change", async e => {
   e.target.value = "";
 });
 
+function infoMon() {
+  const M = MONSTRUOS[$("#kit-mon").value];
+  $("#kit-mon-info").textContent = `CA ${M[1]} · PG ${M[2]} · Ini ${fmtS(M[3])} · Vel ${M[6]} · VD ${M[4]} (${M[5]} PX) — ${M[7]}`;
+}
+const fmtS = n => (n >= 0 ? "+" : "") + n;
+$("#kit-especie").innerHTML = Object.keys(KIT.nombres).map(k => `<option>${k}</option>`).join("");
+$("#kit-mon").innerHTML = Object.entries(MONSTRUOS).sort((a, b) => a[1][0].localeCompare(b[1][0], "es"))
+  .map(([k, M]) => `<option value="${k}">${M[0]} (VD ${M[4]})</option>`).join("");
+$("#pres-nv").innerHTML = [1,2,3,4,5].map(x => `<option>${x}</option>`).join("");
+$("#pres-n").addEventListener("input", renderPresupuesto);
+$("#lectura").innerHTML = botonLectura();
+infoMon(); renderPresupuesto();
 renderCondRef();
 render();
 </script>

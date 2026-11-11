@@ -2,143 +2,157 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mesa D&D — Prueba de conexión</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>La Mesa del Aventurero — Aventuras de D&D de una sola noche</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="estilos.css">
 <style>
-  :root { --bg:#16131a; --card:#221d27; --txt:#ece6f2; --mut:#a89cb5; --acc:#c9a24a; --ok:#5fbf7a; --err:#e06464; }
-  * { box-sizing:border-box; }
-  body { margin:0; font-family:system-ui,-apple-system,sans-serif; background:var(--bg); color:var(--txt); padding:20px; }
-  main { max-width:520px; margin:0 auto; }
-  h1 { font-size:1.4rem; margin:0 0 4px; }
-  p.sub { color:var(--mut); margin:0 0 20px; font-size:.95rem; }
-  .card { background:var(--card); border-radius:12px; padding:16px; margin-bottom:14px; }
-  .card h2 { font-size:1rem; margin:0 0 10px; color:var(--acc); }
-  button { width:100%; padding:14px; margin:6px 0; border:0; border-radius:10px; font-size:1rem; font-weight:600; cursor:pointer; }
-  .dm { background:var(--acc); color:#1a1408; }
-  .pj { background:#3b3346; color:var(--txt); }
-  .sec { background:transparent; color:var(--mut); border:1px solid #3b3346; }
-  code { display:block; background:#0f0d12; padding:10px; border-radius:8px; word-break:break-all; font-size:.9rem; margin:8px 0; }
-  .row { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #2e2836; font-size:.95rem; }
-  .ok { color:var(--ok); } .err { color:var(--err); } .mut { color:var(--mut); }
-  .hidden { display:none; }
+  header.sitio { max-width:1120px; margin:0 auto; padding:20px 24px; display:flex; justify-content:space-between; align-items:center; gap:12px; border-bottom:1px solid rgba(195,160,106,.16); }
+  .marca { font-family:var(--f-titulo); font-size:1.05rem; font-weight:500; letter-spacing:.18em; text-transform:uppercase; color:var(--crema); text-decoration:none; }
+  .marca b { color:var(--oro); font-weight:500; }
+  main { max-width:1120px; margin:0 auto; padding:0 24px 72px; }
+
+  .portada { text-align:center; padding:72px 0 36px; }
+  .portada h1 { font-weight:400; font-size:clamp(2.8rem, 9vw, 5.6rem); line-height:1.02; margin:18px 0 0; }
+  .portada h1 em { color:var(--oro); font-weight:400; }
+  .portada p { max-width:34em; margin:0 auto; color:var(--crema-suave); font-size:1.05rem; }
+  .acciones { display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-top:34px; }
+
+  .pasos { display:grid; gap:34px; margin:34px 0 0; }
+  .paso { text-align:center; padding:0 14px; }
+  .paso .num { font-family:var(--f-titulo); font-style:italic; font-size:2.2rem; color:var(--oro); line-height:1; }
+  .paso h3 { font-size:1.55rem; margin:10px 0 6px; }
+  .paso p { margin:0; color:var(--crema-suave); font-size:.94rem; }
+
+  .seccion-cab p { color:var(--crema-suave); margin:8px 0 0; }
+  .placas { display:grid; gap:20px; }
+  .placa { padding:30px 28px 28px; }
+  .placa .fila { justify-content:space-between; align-items:baseline; }
+  .placa .n { font-family:var(--f-titulo); font-style:italic; color:var(--oro); font-size:1.15rem; }
+  .placa .ico { color:var(--oro); width:1.5em; height:1.5em; }
+  .placa h3 { font-size:1.9rem; margin:14px 0 8px; }
+  .placa .meta { font:500 .66rem var(--f-texto); letter-spacing:.16em; text-transform:uppercase; color:var(--crema-suave); }
+  .placa .meta span + span::before { content:"·"; margin:0 8px; color:var(--oro); }
+  .placa p { color:#CDBFA9; font-size:.96rem; margin:14px 0 0; }
+
+  .hoja { padding:44px 28px; }
+  .hoja .cols { display:grid; gap:36px; }
+  .hoja h3 { font-weight:600; font-size:1.6rem; margin:6px 0 10px; }
+  .hoja h4 { font-family:var(--f-titulo); font-weight:600; font-size:1.25rem; margin:22px 0 6px; }
+  .hoja p { margin:0 0 12px; font-size:.97rem; }
+  .hoja p.capitular::first-letter { font-family:var(--f-titulo); float:left; font-size:3.6rem; line-height:.8; padding:6px 8px 0 0; color:var(--borgona); }
+  .hoja .regla { border-top:1px solid rgba(44,34,25,.25); border-bottom:1px solid rgba(44,34,25,.25); padding:16px 0; margin:18px 0; text-align:center; }
+  .hoja .regla b { display:block; font-family:var(--f-titulo); font-weight:500; font-size:1.9rem; color:var(--borgona); }
+  .hoja .regla span { font-size:.9rem; color:var(--tinta-suave); }
+  .hoja ul { padding-left:18px; margin:0 0 12px; } .hoja li { margin:4px 0; font-size:.95rem; }
+  table { width:100%; border-collapse:collapse; font-size:.92rem; }
+  td, th { text-align:left; padding:7px 4px; border-bottom:1px solid rgba(44,34,25,.18); }
+  th { font:600 .64rem var(--f-texto); letter-spacing:.14em; text-transform:uppercase; color:var(--tinta-suave); }
+
+  footer { text-align:center; color:var(--crema-suave); font-size:.82rem; margin-top:60px; line-height:2; }
+  footer a { color:var(--oro); text-decoration:none; border-bottom:1px solid var(--oro-linea); }
+
+  @media (min-width:820px) {
+    .pasos { grid-template-columns:repeat(3,1fr); gap:0; }
+    .paso + .paso { border-left:1px solid rgba(195,160,106,.16); }
+    .placas { grid-template-columns:repeat(2,1fr); }
+    .placa:first-child { grid-column:span 2; }
+    .hoja { padding:60px 64px; }
+    .hoja .cols { grid-template-columns:1fr 1fr; gap:56px; }
+  }
 </style>
 </head>
 <body>
+<script src="ui.js"></script>
+
+<header class="sitio">
+  <a class="marca" href="index.html">La Mesa <b>del</b> Aventurero</a>
+  <span id="lectura"></span>
+</header>
+
 <main>
-  <h1>🎲 Mesa D&D</h1>
-  <p class="sub">Página de prueba: comprueba que Firebase está bien configurado.</p>
+  <section class="portada">
+    <span class="etiqueta">Aventuras de una sola noche</span>
+    <h1>Siéntate a la mesa.<br><em>La aventura empieza hoy.</em></h1>
+    <div class="orn"><i></i></div>
+    <p>Historias cortas de Dungeons &amp; Dragons que terminan en la misma sesión. Sin experiencia, sin libros, sin comprar nada. Solo ganas de imaginar con tu grupo.</p>
+    <div class="acciones">
+      <a class="btn laton" href="crear.html">Crear mi personaje</a>
+      <a class="btn" href="#como">Cómo se juega</a>
+    </div>
+  </section>
 
-  <div class="card">
-    <h2>1. Estado</h2>
-    <div class="row"><span>Configuración</span><span id="st-config" class="mut">…</span></div>
-    <div class="row"><span>Sesión</span><span id="st-auth" class="mut">sin iniciar</span></div>
-    <div class="row"><span>Base de datos</span><span id="st-db" class="mut">sin probar</span></div>
+  <section class="pasos" aria-label="Cómo empezar">
+    <div class="paso"><div class="num">i.</div><h3>Crea tu héroe</h3><p>Al azar en dos minutos, o eligiendo cada detalle con todo explicado.</p></div>
+    <div class="paso"><div class="num">ii.</div><h3>Elige la aventura</h3><p>Lean el tablón y voten en grupo cuál quieren vivir esta noche.</p></div>
+    <div class="paso"><div class="num">iii.</div><h3>Juega y termina</h3><p>Unas tres horas, con principio, clímax y un final de verdad.</p></div>
+  </section>
+
+  <div class="separador seccion-cab" id="aventuras">
+    <span class="etiqueta">El tablón</span>
+    <h2>Aventuras disponibles</h2>
+    <p>Elijan una con su grupo. Todas se ajustan al número de jugadores.</p>
   </div>
+  <section class="placas" id="placas"></section>
 
-  <div class="card" id="login">
-    <h2>2. Entrar</h2>
-    <button class="dm" id="btn-dm">Entrar como DM (Google)</button>
-    <button class="pj" id="btn-pj">Entrar como jugador (anónimo)</button>
+  <div class="separador seccion-cab" id="como">
+    <span class="etiqueta">Para quien nunca ha jugado</span>
+    <h2>Cómo se juega</h2>
   </div>
+  <article class="pergamino hoja">
+    <div class="cols">
+      <div>
+        <span class="eyebrow">La idea</span>
+        <h3>En treinta segundos</h3>
+        <p class="capitular">Cada jugador controla a un héroe. El DM (Dungeon Master) narra el mundo y da vida a todos los demás personajes. Tú dices qué quieres hacer y, si hay posibilidad de fallar, tiras un dado.</p>
+        <div class="regla"><b>1d20 + tu bonificador</b><span>Si igualas o superas la dificultad, lo logras.</span></div>
+        <p>No necesitas saberte las reglas: describe lo que quieres hacer y el DM te dice qué tirar.</p>
+        <h4>Ventaja y desventaja</h4>
+        <ul><li><b>Ventaja:</b> tira dos d20 y quédate con el mayor.</li><li><b>Desventaja:</b> tira dos d20 y quédate con el menor.</li></ul>
+        <h4>Dificultades típicas</h4>
+        <table><tr><th>Dificultad</th><th>Hay que sacar</th></tr><tr><td>Fácil</td><td>10 o más</td></tr><tr><td>Media</td><td>15 o más</td></tr><tr><td>Difícil</td><td>20 o más</td></tr></table>
+      </div>
+      <div>
+        <span class="eyebrow">En combate</span>
+        <h3>Tu turno</h3>
+        <ul>
+          <li><b>Moverte</b>, normalmente seis casillas.</li>
+          <li><b>Una acción:</b> atacar, lanzar un conjuro, correr, esquivar, ayudar, esconderte…</li>
+          <li><b>Una acción adicional</b>, solo si alguna habilidad tuya lo dice.</li>
+          <li><b>Una reacción</b> por ronda, por ejemplo golpear a alguien que huye de tu lado.</li>
+        </ul>
+        <p>Un <b>20 natural</b> al atacar es un golpe crítico: tiras el doble de dados de daño. Un <b>1 natural</b> es un fallo automático.</p>
+        <h4>Si te quedas sin vida</h4>
+        <p>A 0 puntos de golpe caes inconsciente. En cada turno tiras un d20: 10 o más es un éxito. Con tres éxitos te estabilizas; con tres fallos, mueres. Cualquier curación te devuelve a la acción.</p>
+        <h4>Para tu primera partida</h4>
+        <ul>
+          <li>Di qué quieres hacer, no qué regla usar: <i>«Quiero saltar sobre la mesa y patear al bandido».</i></li>
+          <li>Mira tu ficha mientras juegan los demás: así tu turno es rápido.</li>
+          <li>Fallar también es divertido. Muchas veces genera los mejores momentos.</li>
+        </ul>
+      </div>
+    </div>
+  </article>
 
-  <div class="card hidden" id="info">
-    <h2>3. Tu ID de usuario</h2>
-    <p class="mut" id="tipo"></p>
-    <code id="uid"></code>
-    <button class="sec" id="btn-copy">Copiar ID</button>
-    <button class="sec" id="btn-test">Probar base de datos</button>
-    <button class="sec" id="btn-out">Cerrar sesión</button>
-  </div>
-
-  <p class="mut" id="msg"></p>
+  <footer>
+    ¿Diriges la partida? <a href="dm.html">Abrir el Panel del DM</a> · <a href="prueba.html">Prueba de conexión</a><br>
+    Basado en el SRD 5.2.1 de Wizards of the Coast LLC (CC-BY-4.0). Aventuras y adaptación: contenido propio.
+  </footer>
 </main>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
-  import { getAuth, GoogleAuthProvider, signInWithPopup, signInAnonymously, onAuthStateChanged, signOut }
-    from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
-  import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-database.js";
-  import { firebaseConfig } from "./config.js";
-
-  const $ = id => document.getElementById(id);
-  const setSt = (id, text, cls) => { $(id).textContent = text; $(id).className = cls; };
-  const msg = t => { $("msg").textContent = t; };
-
-  const configOk = Object.values(firebaseConfig).every(v => v && !String(v).includes("PEGA_AQUI"));
-  if (!configOk) {
-    setSt("st-config", "faltan datos en config.js", "err");
-    msg("Abre config.js y reemplaza todos los PEGA_AQUI con los datos de Firebase.");
-  } else {
-    setSt("st-config", "OK", "ok");
-  }
-
-  let auth, db;
-  try {
-    const app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
-    db = getDatabase(app);
-  } catch (e) {
-    setSt("st-config", "error", "err");
-    msg("Error al iniciar Firebase: " + e.message);
-  }
-
-  const explain = e => {
-    const c = e.code || "";
-    if (c.includes("operation-not-allowed")) return "Ese método de inicio de sesión no está activado (guía, paso A3).";
-    if (c.includes("unauthorized-domain")) return "Falta autorizar este dominio en Firebase (guía, paso B4).";
-    if (c.includes("popup-blocked")) return "El navegador bloqueó la ventana emergente. Permite pop-ups e inténtalo de nuevo.";
-    if (c.includes("popup-closed")) return "Cerraste la ventana antes de terminar.";
-    if (c.includes("PERMISSION_DENIED") || String(e.message).includes("Permission denied"))
-      return "Permiso denegado: faltan las reglas de prueba en Realtime Database → Reglas.";
-    return (c ? c + ": " : "") + e.message;
-  };
-
-  $("btn-dm").onclick = async () => {
-    try { await signInWithPopup(auth, new GoogleAuthProvider()); msg(""); }
-    catch (e) { msg(explain(e)); }
-  };
-  $("btn-pj").onclick = async () => {
-    try { await signInAnonymously(auth); msg(""); }
-    catch (e) { msg(explain(e)); }
-  };
-  $("btn-out").onclick = () => signOut(auth);
-  $("btn-copy").onclick = async () => {
-    try { await navigator.clipboard.writeText($("uid").textContent); msg("ID copiado."); }
-    catch { msg("No se pudo copiar automáticamente: selecciona el ID y cópialo a mano."); }
-  };
-  $("btn-test").onclick = async () => {
-    const u = auth.currentUser;
-    if (!u) return;
-    setSt("st-db", "probando…", "mut");
-    try {
-      const r = ref(db, "pruebas/" + u.uid);
-      const stamp = new Date().toISOString();
-      await set(r, { hora: stamp });
-      const snap = await get(r);
-      if (snap.val()?.hora === stamp) { setSt("st-db", "OK — lee y escribe", "ok"); msg("¡Todo conectado!"); }
-      else { setSt("st-db", "respuesta inesperada", "err"); }
-    } catch (e) {
-      setSt("st-db", "error", "err");
-      msg(explain(e));
-    }
-  };
-
-  if (auth) onAuthStateChanged(auth, user => {
-    if (user) {
-      setSt("st-auth", user.isAnonymous ? "jugador (anónimo)" : "DM (Google)", "ok");
-      $("tipo").textContent = user.isAnonymous
-        ? "Sesión de jugador anónimo. Este ID cambia si cierras sesión."
-        : "Sesión de DM. Este es el ID que necesito para las reglas definitivas.";
-      $("uid").textContent = user.uid;
-      $("login").classList.add("hidden");
-      $("info").classList.remove("hidden");
-    } else {
-      setSt("st-auth", "sin iniciar", "mut");
-      setSt("st-db", "sin probar", "mut");
-      $("login").classList.remove("hidden");
-      $("info").classList.add("hidden");
-    }
-  });
+<script src="datos.js"></script>
+<script>
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const romanos = ["I","II","III","IV","V","VI","VII","VIII","IX","X"];
+  document.getElementById("lectura").innerHTML = botonLectura();
+  document.getElementById("placas").innerHTML = AVENTURAS.map((a, i) => `
+    <article class="cuero placa">
+      <div class="fila"><span class="n">${romanos[i] || i + 1}.</span>${ico(a.icono)}</div>
+      <h3>${esc(a.titulo)}</h3>
+      <div class="meta"><span>${esc(a.tono)}</span><span>${a.duracion}</span><span>${esc(a.jugadores.split(" ")[0])} jugadores</span></div>
+      <p>${esc(a.teaser)}</p>
+    </article>`).join("");
 </script>
 </body>
 </html>
