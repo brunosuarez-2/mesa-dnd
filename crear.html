@@ -89,6 +89,7 @@
 </head>
 <body>
 <script src="ui.js"></script>
+<script type="module">if (new URLSearchParams(location.search).get("m")) import("./firebase.js");</script>
 <main>
   <div class="top"><a class="casa" href="index.html" aria-label="Volver al inicio"><svg class="ico g" aria-hidden="true"><use href="#i-casa"/></svg></a><h1>Crea tu personaje</h1><span id="lectura"></span></div>
   <div class="progreso"><div class="prog"><i id="prog"></i></div><span id="paso-txt"></span></div>
@@ -459,8 +460,9 @@ const VISTAS = {
       <p class="nota">Basado en el SRD 5.2.1 de Wizards of the Coast LLC (CC-BY-4.0). Traducción y adaptación propias.</p>
     </article>
     <div class="acciones no-print">
+      ${MESA ? `<button class="btn laton" data-accion="mesa">${ico("check")} Unirme a la mesa ${esc(MESA)} con este personaje</button>` : ""}
       <button class="btn" data-accion="imprimir">${ico("imprimir")} Imprimir o guardar PDF</button>
-      <button class="btn" data-accion="grupo">${ico("escudo")} Agregar al grupo del DM</button>
+      ${MESA ? "" : `<button class="btn" data-accion="grupo">${ico("escudo")} Agregar al grupo del DM</button>`}
       <button class="btn" data-accion="nuevo">${ico("mas")} Crear otro</button>
     </div>`;
   },
@@ -516,6 +518,7 @@ document.addEventListener("click", e => {
   if (acc === "imprimir") window.print();
   if (acc === "nuevo") { P = {}; paso = 0; pintar(); }
   if (acc === "grupo") agregarAlGrupo();
+  if (acc === "mesa") unirseMesa(t);
 });
 document.addEventListener("change", e => {
   const t = e.target;
@@ -539,20 +542,59 @@ $("#atras").onclick = () => {
   paso = Math.max(0, paso - 1); pintar();
 };
 
-/* ===== Integración con el Panel DM (mismo dispositivo, mismo sitio) ===== */
-function agregarAlGrupo() {
+/* ===== Ficha completa del personaje (formato compartido con el Panel DM y la hoja del jugador) ===== */
+const MESA = (new URLSearchParams(location.search).get("m") || "").toUpperCase();
+function construirPJ() {
   const R = calcular();
-  const CLAVE = "mesa-dnd-dm-v1";
-  let E;
-  try { E = JSON.parse(localStorage.getItem(CLAVE)) || { grupo:{}, combate:{ ronda:0, turno:0, lista:[] }, historial:[] }; }
-  catch { E = { grupo:{}, combate:{ ronda:0, turno:0, lista:[] }, historial:[] }; }
-  const id = Math.random().toString(36).slice(2, 10);
   const espacios = {};
   if (R.mag) espacios[1] = { max: P.clase === "brujo" ? 1 : 2, usados: 0 };
-  E.grupo[id] = { id, nombre: P.nombre, jugador: P.jugador || "", clase: R.C.n, nivel: 1, pgMax: R.pg, pg: R.pg, pgTemp: 0,
-                  ca: R.ca, bono: R.ini, espacios, notas: `${R.S.n} · ${R.B.n}` };
+  const po = num((R.eq.txt.match(/(\d+)\s*po/) || [])[1]);
+  return {
+    id: Math.random().toString(36).slice(2, 10),
+    nombre: P.nombre || "Sin nombre", jugador: P.jugador || "", clase: R.C.n, nivel: 1,
+    ca: R.ca, bono: R.ini, pgMax: R.pg, pg: R.pg, pgTemp: 0, espacios,
+    notas: `${R.S.n} · ${R.B.n}`, muerte: { ok: 0, ko: 0 }, agot: 0, conc: false, insp: false,
+    dg: { max: 1, usados: 0 }, monedas: { po, pp: 0, pc: 0 },
+    inventario: `${R.eq.txt}\nDel trasfondo (${R.B.n.toLowerCase()}): su paquete de equipo. Herramienta: ${R.B.herr}.`,
+    ficha: {
+      especie: R.S.n + (P.sub ? ` (${P.sub})` : ""), trasfondo: R.B.n, vel: R.vel, pb: R.pb, dgDado: R.C.dg, percPas: R.percPas,
+      cars: Object.fromEntries(CAR.map(k => [k, { nom: CAR_N[k], v: R.val[k], m: R.m[k] }])),
+      salv: CAR.map(k => ({ n: CAR_N[k], comp: R.C.salv.includes(k), b: R.m[k] + (R.C.salv.includes(k) ? R.pb : 0) })),
+      habs: TODAS.map(h => ({ n: h, car: HAB[h], comp: R.habs.has(h), b: R.m[HAB[h]] + (R.habs.has(h) ? R.pb : 0) })),
+      armas: R.armas,
+      magia: R.mag ? { car: R.mag.car, cd: R.mag.cd, atq: R.mag.atq, trucos: R.mag.trucos, prep: R.mag.prep, esp: R.mag.esp } : null,
+      rasgos: R.rasgos, equipo: [R.eq.txt],
+      personalidad: { motivo: P.motivo || "", rasgo: P.rasgo || "", apariencia: P.apariencia || "" },
+    },
+  };
+}
+function num(v, def = 0) { const n = parseInt(v, 10); return Number.isFinite(n) ? n : def; }
+
+/* Mismo dispositivo: lo agrega al grupo local del Panel DM */
+function agregarAlGrupo() {
+  const CLAVE = "mesa-dnd-dm-v1";
+  let E;
+  try { E = JSON.parse(localStorage.getItem(CLAVE)) || null; } catch { E = null; }
+  E = E || { grupo:{}, combate:{ ronda:0, turno:0, lista:[] }, historial:[], aventura:null, kit:[] };
+  const pj = construirPJ();
+  E.grupo[pj.id] = pj;
   try { localStorage.setItem(CLAVE, JSON.stringify(E)); toast("Agregado al grupo del Panel DM."); }
   catch { toast("No se pudo guardar en este dispositivo."); }
+}
+
+/* En línea: se une a la mesa del DM con este personaje */
+async function unirseMesa(boton) {
+  if (!window.Nube) return toast(window.NubeError ? "Sin conexión: necesitas internet para unirte." : "Conectando… inténtalo en un segundo.");
+  boton.disabled = true;
+  try {
+    const u = await Nube.entrarAnonimo();
+    const mesaId = await Nube.leer(`codigos/${MESA}`);
+    if (!mesaId) { boton.disabled = false; return toast("Ese código de mesa no existe."); }
+    const pj = construirPJ(); pj.jugadorUid = u.uid;
+    await Nube.escribir(`mesas/${mesaId}/personajes/${pj.id}`, pj);
+    await Nube.escribir(`mesas/${mesaId}/jugadores/${u.uid}`, { nombre: P.jugador || P.nombre || "Jugador", pj: pj.id });
+    location.href = `jugador.html?m=${encodeURIComponent(MESA)}`;
+  } catch (e) { console.error(e); boton.disabled = false; toast("No se pudo unir a la mesa. Revisa tu conexión."); }
 }
 
 $("#lectura").innerHTML = botonLectura();

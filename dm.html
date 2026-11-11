@@ -127,6 +127,22 @@
   .nota-kit { border-left: 2px solid var(--oro-linea); }
   .nota-kit.nueva { border-left-color: var(--borgona); }
   dialog .grid { gap: 10px; }
+  .candado { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 20px;
+    background: var(--grano), radial-gradient(ellipse 80% 45% at 50% -8%, rgba(195,160,106,.09), transparent 70%), var(--noche); }
+  .candado.fuera { display: none; }
+  .placa-candado { width: min(92vw, 420px); padding: 34px 26px; text-align: center; }
+  .placa-candado h2 { font-size: 2.4rem; font-weight: 400; color: var(--crema); margin: 10px 0 8px; }
+  .placa-candado p { color: var(--crema-suave); margin: 0 0 20px; }
+  .placa-candado .btn { width: 100%; margin-top: 8px; }
+  .codigo-mesa { font: 500 2.6rem/1 var(--f-titulo); letter-spacing: .25em; text-align: center; color: var(--crema); margin: 8px 0 4px; }
+  .qr { background: var(--manuscrito); padding: 10px; width: 176px; height: 176px; margin: 12px auto; display: grid; place-items: center; }
+  .qr svg { width: 100%; height: 100%; }
+  .mesa-online .stat { color: var(--crema-suave); }
+  .mesa-online label.f { color: var(--crema-suave); }
+  .msj-dm { padding: 8px 0; border-bottom: 1px solid rgba(195,160,106,.15); font-size: .9rem; color: var(--crema); }
+  .msj-dm small { color: var(--crema-suave); display: block; font-size: .72rem; }
+  .jug { display: inline-flex; align-items: center; gap: 6px; font-size: .82rem; color: var(--crema); padding: 4px 10px; border: 1px solid var(--oro-linea); margin: 0 6px 6px 0; }
+  .en-linea { color: var(--bosque-claro); font: 600 .62rem var(--f-texto); letter-spacing: .14em; text-transform: uppercase; }
 
   @media (min-width: 980px) {
     body { padding-bottom: 0; padding-left: 104px; }
@@ -150,6 +166,7 @@
 <body>
 
 <script src="ui.js"></script>
+<script type="module" src="firebase.js" onerror="window.NubeError=1;window.dispatchEvent(new Event('nube-error'))"></script>
 <header class="cab">
   <a class="casa" href="index.html" aria-label="Volver al inicio"><svg class="ico g" aria-hidden="true"><use href="#i-casa"/></svg></a>
   <h1>Panel del DM</h1>
@@ -157,6 +174,12 @@
   <span class="ronda" id="ronda"></span>
 </header>
 
+<div id="candado" class="candado"><div class="cuero placa-candado">
+  <span class="eyebrow">Solo para quien dirige</span>
+  <h2 class="titulo">Panel del DM</h2>
+  <p id="candado-txt">Verificando…</p>
+  <div id="candado-acc"></div>
+</div></div>
 <main>
   <!-- COMBATE -->
   <section class="tab on" id="t-combate">
@@ -225,6 +248,7 @@
       <button class="b p grow" data-act="nuevo-pj"><svg class="ico"><use href="#i-mas"/></svg>Nuevo personaje</button>
       <button class="b" data-act="descanso-largo-todos">Descanso largo (todos)</button>
     </div>
+    <div id="mesa-en-linea"></div>
     <div id="lista-grupo"></div>
   </section>
 
@@ -366,7 +390,7 @@ const CLAVE = "mesa-dnd-dm-v1";
 const nuevoEstado = () => ({ grupo:{}, combate:{ ronda:0, turno:0, lista:[] }, historial:[], aventura:null, kit:[] });
 let E;
 try { E = JSON.parse(localStorage.getItem(CLAVE)) || nuevoEstado(); } catch { E = nuevoEstado(); }
-function guardar() { try { localStorage.setItem(CLAVE, JSON.stringify(E)); } catch {} }
+function guardar() { try { localStorage.setItem(CLAVE, JSON.stringify({ ...E, mesa: E.mesa ? { id: E.mesa.id, codigo: E.mesa.codigo, nombre: E.mesa.nombre } : null })); } catch {} if (typeof subir === "function") subir(); }
 const uid = () => Math.random().toString(36).slice(2, 10);
 
 /* ============ UTILIDADES ============ */
@@ -378,6 +402,15 @@ const num = (v, def = 0) => { const n = parseInt(v, 10); return Number.isFinite(
 
 // Un combatiente PJ guarda PG/espacios en su ficha del grupo (una sola fuente de verdad).
 const fuente = c => (c.ref && E.grupo[c.ref]) ? E.grupo[c.ref] : c;
+// Estado (condiciones, agotamiento, concentración, muerte): en la ficha si es PJ, así lo ve también el jugador
+function est(c) {
+  const o = fuente(c);
+  if (!o.condiciones) o.condiciones = {};
+  if (o.agot == null) o.agot = 0;
+  if (o.conc == null) o.conc = false;
+  if (!o.muerte) o.muerte = { ok: 0, ko: 0 };
+  return o;
+}
 
 /* ============ COMBATE ============ */
 function anadirCombatiente({ nombre, tipo, pg, ca, bono, ini, ref = null, acc = "", vel = "" }) {
@@ -416,13 +449,13 @@ function aplicarPG(c, modo, cant) {
     const antes = f.pg;
     f.pg = Math.max(0, f.pg - resto);
     if (antes > 0 && f.pg === 0) toast(`${c.nombre} cae a 0 PG`);
-    else if (antes === 0 && resto > 0 && c.tipo === "pj") { c.muerte.ko = Math.min(3, c.muerte.ko + 1); toast("Daño a 0 PG: +1 fallo de salvación contra muerte"); }
-    if (c.conc && resto > 0) {
+    else if (antes === 0 && resto > 0 && c.tipo === "pj") { est(c).muerte.ko = Math.min(3, est(c).muerte.ko + 1); toast("Daño a 0 PG: +1 fallo de salvación contra muerte"); }
+    if (est(c).conc && resto > 0) {
       const cd = Math.min(30, Math.max(10, Math.floor(resto / 2)));
       c._avisoConc = `Concentración: salvación de Constitución CD ${cd}`;
     }
   } else if (modo === "curar") {
-    if (f.pg === 0) c.muerte = { ok: 0, ko: 0 };
+    if (f.pg === 0) est(c).muerte = { ok: 0, ko: 0 };
     f.pg = Math.min(f.pgMax, f.pg + cant);
   } else if (modo === "temp") {
     f.pgTemp = Math.max(f.pgTemp || 0, cant); // los PG temporales no se suman: te quedas con el mayor
@@ -435,7 +468,7 @@ function render() {
   const C = E.combate;
   $("#ronda").textContent = C.ronda ? `Ronda ${C.ronda}` : "Sin combate";
   $("#ronda").classList.toggle("activa", !!C.ronda);
-  renderCombate(); renderGrupo(); renderHist(); renderAventura(); renderKit();
+  renderCombate(); renderGrupo(); renderHist(); renderAventura(); renderKit(); if (typeof renderMesa === "function") renderMesa();
 }
 
 /* ============ AVENTURA ============ */
@@ -564,17 +597,17 @@ function renderCombate() {
   el.innerHTML = L.map((c, idx) => {
     const f = fuente(c);
     const turno = E.combate.ronda > 0 && idx === E.combate.turno;
-    const conds = Object.keys(c.condiciones).filter(k => c.condiciones[k]);
+    const conds = Object.keys(est(c).condiciones).filter(k => est(c).condiciones[k]);
     const chips = conds.map(k => `<span class="chip on" data-act="ver-cond" data-id="${c.id}">${esc(k)}</span>`).join("")
-      + (c.agot ? `<span class="chip on" data-act="ver-cond" data-id="${c.id}">Agotamiento ${c.agot}</span>` : "")
-      + `<span class="chip ${c.conc ? "conc" : ""}" data-act="conc" data-id="${c.id}">${c.conc ? "Concentrando" : "Concentración"}</span>`
+      + (est(c).agot ? `<span class="chip on" data-act="ver-cond" data-id="${c.id}">Agotamiento ${est(c).agot}</span>` : "")
+      + `<span class="chip ${est(c).conc ? "conc" : ""}" data-act="conc" data-id="${c.id}">${est(c).conc ? "Concentrando" : "Concentración"}</span>`
       + `<span class="chip" data-act="ver-cond" data-id="${c.id}">+ condición</span>`;
     const muerte = (c.tipo === "pj" && f.pg === 0) ? `
       <div class="muerte">
         <span>Salvación vs muerte</span>
-        <span class="pips">${[0,1,2].map(i => `<button class="pip ${i < c.muerte.ok ? "ok" : ""}" data-act="muerte" data-t="ok" data-id="${c.id}" data-i="${i}" aria-label="Éxito"></button>`).join("")}</span>
-        <span class="pips">${[0,1,2].map(i => `<button class="pip ${i < c.muerte.ko ? "ko" : ""}" data-act="muerte" data-t="ko" data-id="${c.id}" data-i="${i}" aria-label="Fallo"></button>`).join("")}</span>
-        ${c.muerte.ok >= 3 ? "<b style='color:var(--ok)'>Estable</b>" : c.muerte.ko >= 3 ? "<b style='color:var(--err)'>Muerto</b>" : ""}
+        <span class="pips">${[0,1,2].map(i => `<button class="pip ${i < est(c).muerte.ok ? "ok" : ""}" data-act="muerte" data-t="ok" data-id="${c.id}" data-i="${i}" aria-label="Éxito"></button>`).join("")}</span>
+        <span class="pips">${[0,1,2].map(i => `<button class="pip ${i < est(c).muerte.ko ? "ko" : ""}" data-act="muerte" data-t="ko" data-id="${c.id}" data-i="${i}" aria-label="Fallo"></button>`).join("")}</span>
+        ${est(c).muerte.ok >= 3 ? "<b style='color:var(--ok)'>Estable</b>" : est(c).muerte.ko >= 3 ? "<b style='color:var(--err)'>Muerto</b>" : ""}
       </div>` : "";
     const aviso = c._avisoConc ? `<div class="aviso">${ico("vela")}<span class="grow">${esc(c._avisoConc)}</span><button class="x" data-act="ok-aviso" data-id="${c.id}" aria-label="Cerrar aviso">${ico("cerrar")}</button></div>` : "";
     return `
@@ -609,7 +642,7 @@ function renderGrupo() {
       <div class="row">
         <div class="grow">
           <div class="nombre">${esc(p.nombre)}</div>
-          <div class="stat">${esc(p.clase || "—")} ${p.nivel ? "nv " + p.nivel : ""}${p.jugador ? " · " + esc(p.jugador) : ""}</div>
+          <div class="stat">${esc(p.clase || "—")} ${p.nivel ? "nv " + p.nivel : ""}${p.jugador ? " · " + esc(p.jugador) : ""}${ONLINE ? (p.jugadorUid ? ` · <b style="color:var(--bosque)">con jugador</b>` : " · libre") : ""}</div>
           <div class="stat">CA <b>${p.ca}</b> · PG <b>${p.pg}</b>/${p.pgMax}${p.pgTemp ? ` +${p.pgTemp} temp` : ""} · Ini ${p.bono >= 0 ? "+" : ""}${p.bono}</div>
         </div>
         <button class="b s" data-act="editar-pj" data-pj="${p.id}">Editar</button>
@@ -618,6 +651,7 @@ function renderGrupo() {
       ${slotsHTML(p, "pj")}
       ${p.notas ? `<p class="stat" style="margin:8px 0 0">${esc(p.notas)}</p>` : ""}
       <div class="row" style="margin-top:8px">
+        ${ONLINE && p.jugadorUid ? `<button class="b s" data-act="secreto" data-pj="${p.id}">${ico("sobre")} Mensaje secreto</button>` : ""}
         <button class="b s" data-act="descanso-largo" data-pj="${p.id}">Descanso largo</button>
         <button class="b s" data-act="borrar-pj" data-pj="${p.id}" style="color:var(--err)">Borrar</button>
       </div>
@@ -690,7 +724,7 @@ function guardarPJ() {
     const max = Math.max(0, num($(`#p-s${n}`).value));
     if (max) espacios[n] = { max, usados: Math.min(viejo?.espacios?.[n]?.usados || 0, max) };
   }
-  const p = {
+  const p = { ...(viejo || {}),
     id: viejo?.id || uid(), nombre, jugador: $("#p-jugador").value.trim(), clase: $("#p-clase").value.trim(),
     nivel: num($("#p-nivel").value, 1), pgMax, ca: num($("#p-ca").value, 10), bono: num($("#p-bono").value),
     pg: viejo ? Math.min(viejo.pg, pgMax) : pgMax, pgTemp: viejo?.pgTemp || 0, espacios, notas: $("#p-notas").value.trim()
@@ -704,14 +738,15 @@ function abrirCond(id) {
   const c = E.combate.lista.find(x => x.id === id); if (!c) return;
   $("#cond-titulo").textContent = `Condiciones — ${c.nombre}`;
   $("#cond-chips").innerHTML = CONDICIONES.map(([es]) =>
-    `<span class="chip ${c.condiciones[es] ? "on" : ""}" data-act="toggle-cond" data-c="${es}">${es}</span>`).join("");
-  $("#agot-nivel").textContent = c.agot;
+    `<span class="chip ${est(c).condiciones[es] ? "on" : ""}" data-act="toggle-cond" data-c="${es}">${es}</span>`).join("");
+  $("#agot-nivel").textContent = est(c).agot;
   if (!$("#dlg-cond").open) $("#dlg-cond").showModal();
 }
 function descansoLargo(p) {
   p.pg = p.pgMax; p.pgTemp = 0;
   Object.values(p.espacios || {}).forEach(s => s.usados = 0);
-  E.combate.lista.forEach(c => { if (c.ref === p.id) { c.muerte = { ok: 0, ko: 0 }; if (c.agot) c.agot--; } });
+  p.muerte = { ok: 0, ko: 0 }; if (p.agot) p.agot--;
+  p.dg = { max: p.nivel || 1, usados: 0 };
 }
 
 /* ============ EVENTOS ============ */
@@ -731,6 +766,14 @@ document.addEventListener("click", e => {
   }
   const id = t.dataset.id, c = id ? E.combate.lista.find(x => x.id === id) : null;
   switch (t.dataset.act) {
+    case "entrar-dm": Nube.entrarDM().catch(e => toast(e.code === "auth/unauthorized-domain" ? "Falta autorizar este dominio en Firebase." : "No se pudo iniciar sesión.")); return;
+    case "salir-cuenta": Nube.salir(); return;
+    case "modo-local": $("#candado").classList.add("fuera"); renderMesa(); return;
+    case "crear-mesa": crearMesa().catch(e => { console.error(e); toast("No se pudo crear la mesa. ¿Pegaste las reglas nuevas en Firebase?"); }); return;
+    case "reconectar": reconectar(E.mesaAnterior); return;
+    case "salir-mesa": salirMesa(); return;
+    case "copiar-enlace": navigator.clipboard?.writeText(enlaceJugador()).then(() => toast("Enlace copiado."), () => toast(enlaceJugador())); return;
+    case "secreto": mensajeSecreto(t.dataset.pj); return;
     case "av-elegir":
       E.aventura = { id: t.dataset.av, reloj: [false,false,false,false,false,false], visitados: {},
                      jugadores: Math.max(1, Object.keys(E.grupo).length || 4), nivel: 1 };
@@ -790,21 +833,21 @@ document.addEventListener("click", e => {
       break;
     }
     case "pg": aplicarPG(c, t.dataset.m, num($(`#pg-${id}`).value)); break;
-    case "conc": c.conc = !c.conc; if (!c.conc) delete c._avisoConc; break;
+    case "conc": est(c).conc = !est(c).conc; if (!est(c).conc) delete c._avisoConc; break;
     case "ok-aviso": delete c._avisoConc; break;
     case "muerte": {
       const k = t.dataset.t, i = +t.dataset.i;
-      c.muerte[k] = c.muerte[k] === i + 1 ? i : i + 1; break;
+      est(c).muerte[k] = est(c).muerte[k] === i + 1 ? i : i + 1; break;
     }
     case "ver-cond": abrirCond(id); return;
     case "toggle-cond": {
       const x = E.combate.lista.find(y => y.id === condObjetivo);
-      x.condiciones[t.dataset.c] = !x.condiciones[t.dataset.c]; abrirCond(condObjetivo); break;
+      est(x).condiciones[t.dataset.c] = !est(x).condiciones[t.dataset.c]; abrirCond(condObjetivo); break;
     }
     case "agot": {
       const x = E.combate.lista.find(y => y.id === condObjetivo);
-      x.agot = Math.max(0, Math.min(6, x.agot + num(t.dataset.d)));
-      if (x.agot === 6) toast(`${x.nombre} llega a Agotamiento 6: muere.`);
+      est(x).agot = Math.max(0, Math.min(6, est(x).agot + num(t.dataset.d)));
+      if (est(x).agot === 6) toast(`${x.nombre} llega a Agotamiento 6: muere.`);
       abrirCond(condObjetivo); break;
     }
     case "slot": {
@@ -856,6 +899,131 @@ $("#archivo").addEventListener("change", async e => {
     E = datos; render(); toast("Respaldo importado.");
   } catch { toast("Ese archivo no es un respaldo válido."); }
   e.target.value = "";
+});
+
+/* ============ MESA EN LÍNEA (Firebase) ============ */
+let ONLINE = false, ultimo = {}, desuscribir = [], jugadoresMesa = {}, mensajesAlDM = {}, renderPendiente = false;
+const norm = v => (v && typeof v === "object" && !Array.isArray(v) && !Object.keys(v).length) ? undefined : JSON.stringify(v);
+const limpio = v => JSON.parse(JSON.stringify(v));
+const rutaPJ = id => `mesas/${E.mesa.id}/personajes/${id}`;
+const escribiendo = () => { const a = document.activeElement; return a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && !a.closest("dialog"); };
+
+function subir() {
+  if (!ONLINE || !window.Nube) return;
+  for (const [id, p] of Object.entries(E.grupo)) {
+    const prev = ultimo[id] || {}, cambios = {};
+    for (const k of Object.keys(p)) { const v = norm(p[k]); if (v !== undefined && prev[k] !== v) cambios[k] = p[k]; }
+    for (const k of Object.keys(prev)) if (prev[k] !== undefined && norm(p[k]) === undefined) cambios[k] = null;
+    if (Object.keys(cambios).length) {
+      Nube.actualizar(rutaPJ(id), limpio(cambios)).catch(e => { console.error(e); toast("No se pudo sincronizar un cambio."); });
+      ultimo[id] = { ...prev }; for (const [k, v] of Object.entries(cambios)) ultimo[id][k] = v === null ? undefined : norm(v);
+    }
+  }
+  for (const id of Object.keys(ultimo)) if (!E.grupo[id]) { Nube.borrar(rutaPJ(id)); delete ultimo[id]; }
+}
+function conectarMesa() {
+  desuscribir.forEach(f => f()); desuscribir = [];
+  const id = E.mesa.id;
+  desuscribir.push(Nube.escuchar(`mesas/${id}/personajes`, (v, err) => {
+    if (err) { toast("Se perdió el acceso a la mesa."); return; }
+    E.grupo = v || {};
+    ultimo = Object.fromEntries(Object.entries(E.grupo).map(([k, p]) => [k, Object.fromEntries(Object.entries(p).map(([c, x]) => [c, norm(x)]))]));
+    ONLINE = true;
+    if (escribiendo()) renderPendiente = true; else render();
+  }));
+  desuscribir.push(Nube.escuchar(`mesas/${id}/jugadores`, v => { jugadoresMesa = v || {}; renderMesa(); }));
+  desuscribir.push(Nube.escuchar(`mesas/${id}/alDM`, v => {
+    const antes = contarMsj(mensajesAlDM); mensajesAlDM = v || {};
+    if (contarMsj(mensajesAlDM) > antes && antes >= 0 && E.mesa._listo) toast("Un jugador te escribió en secreto (pestaña Grupo).");
+    renderMesa();
+  }));
+  setTimeout(() => { if (E.mesa) E.mesa._listo = true; }, 1500);
+}
+const contarMsj = m => Object.values(m || {}).reduce((s, x) => s + Object.keys(x || {}).length, 0);
+document.addEventListener("focusout", () => setTimeout(() => { if (renderPendiente && !escribiendo()) { renderPendiente = false; render(); } }, 60));
+
+async function crearMesa() {
+  const nombre = ($("#mesa-nombre")?.value || "").trim() || "Mesa de " + new Date().toLocaleDateString("es");
+  const ALF = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let codigo;
+  do { codigo = Array.from({ length: 6 }, () => ALF[Math.floor(Math.random() * ALF.length)]).join(""); }
+  while (await Nube.leer(`codigos/${codigo}`));
+  const id = Nube.nuevaClave("mesas");
+  await Nube.escribir(`mesas/${id}/info`, { nombre, codigo, creada: Date.now() });
+  await Nube.escribir(`codigos/${codigo}`, id);
+  for (const p of Object.values(E.grupo)) await Nube.escribir(`mesas/${id}/personajes/${p.id}`, limpio(p));
+  E.mesa = { id, codigo, nombre }; guardar();
+  conectarMesa(); toast(`Mesa creada. Código: ${codigo}`);
+}
+function salirMesa() {
+  if (!confirm("¿Desconectar esta mesa? El grupo queda guardado en este dispositivo y en la nube; podrás volver a conectarla.")) return;
+  desuscribir.forEach(f => f()); desuscribir = []; ONLINE = false;
+  E.mesaAnterior = E.mesa; E.mesa = null; jugadoresMesa = {}; mensajesAlDM = {}; render();
+}
+async function reconectar(m) { E.mesa = m; guardar(); conectarMesa(); }
+function enlaceJugador() { return location.href.replace(/dm\.html.*$/, "") + "jugador.html?m=" + E.mesa.codigo; }
+let qrCargado = null;
+function pintarQR() {
+  const el = $("#qr"); if (!el || !E.mesa) return;
+  const dibujar = () => { const q = qrcode(0, "M"); q.addData(enlaceJugador()); q.make(); el.innerHTML = q.createSvgTag({ cellSize: 4, margin: 0, scalable: true }); };
+  if (window.qrcode) return dibujar();
+  if (!qrCargado) { qrCargado = new Promise((ok, mal) => { const sc = document.createElement("script"); sc.src = "https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"; sc.onload = ok; sc.onerror = mal; document.head.appendChild(sc); }); }
+  qrCargado.then(dibujar).catch(() => { el.innerHTML = `<span class="stat" style="color:var(--tinta-suave)">QR no disponible sin internet</span>`; });
+}
+function renderMesa() {
+  const el = $("#mesa-en-linea"); if (!el) return;
+  if (!window.Nube) { el.innerHTML = window.NubeError ? `<div class="cuero mesa-online" style="padding:16px;margin-bottom:14px"><span class="eyebrow">Modo local</span><p class="stat" style="margin:6px 0 0">Sin conexión: el grupo se guarda solo en este dispositivo.</p></div>` : ""; return; }
+  if (!E.mesa) {
+    el.innerHTML = `<div class="cuero mesa-online" style="padding:20px;margin-bottom:14px">
+      <span class="eyebrow">Mesa en línea</span>
+      <h2 style="color:var(--crema);margin:8px 0 6px">Conecta a tus jugadores</h2>
+      <p class="stat" style="margin:0 0 14px">Crea una mesa: tus jugadores se unen con un código o QR desde su celular, sin cuenta. Verás sus fichas en vivo.</p>
+      <div class="row"><label class="f grow">Nombre de la mesa<input id="mesa-nombre" class="w" placeholder="Viernes en la taberna"></label></div>
+      <div class="row" style="margin-top:10px"><button class="b p" data-act="crear-mesa">Crear mesa en línea</button>
+      ${E.mesaAnterior ? `<button class="b" data-act="reconectar">Volver a ${esc(E.mesaAnterior.nombre)} (${esc(E.mesaAnterior.codigo)})</button>` : ""}</div>
+    </div>`;
+    return;
+  }
+  const jug = Object.entries(jugadoresMesa);
+  const msjs = Object.entries(mensajesAlDM).flatMap(([uid, ms]) => Object.values(ms || {}).map(m => ({ ...m, uid }))).sort((a, b) => (b.hora || 0) - (a.hora || 0));
+  el.innerHTML = `<div class="cuero mesa-online" style="padding:20px;margin-bottom:14px">
+    <div class="row between"><span class="eyebrow">Mesa en línea · ${esc(E.mesa.nombre)}</span><span class="en-linea">${ONLINE ? "● Conectada" : "Conectando…"}</span></div>
+    <div class="codigo-mesa">${esc(E.mesa.codigo)}</div>
+    <p class="stat" style="text-align:center;margin:0">Tus jugadores entran en <b style="color:var(--crema)">jugador.html</b> y escriben este código, o escanean el QR.</p>
+    <div class="qr" id="qr"></div>
+    <div class="row" style="justify-content:center"><button class="b s" data-act="copiar-enlace">Copiar enlace</button><button class="b s" data-act="salir-mesa">Desconectar</button></div>
+    <h3 style="color:var(--oro);margin-top:18px">Jugadores conectados (${jug.length})</h3>
+    <div>${jug.length ? jug.map(([, j]) => `<span class="jug">${ico("persona")}${esc(j.nombre || "Jugador")}</span>`).join("") : `<span class="stat">Aún nadie.</span>`}</div>
+    ${msjs.length ? `<h3 style="color:var(--oro);margin-top:16px">Mensajes secretos de jugadores</h3>${msjs.slice(0, 6).map(m => `<div class="msj-dm">${esc(m.texto)}<small>${esc(m.pj || jugadoresMesa[m.uid]?.nombre || "Jugador")} · ${new Date(m.hora || 0).toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })}</small></div>`).join("")}` : ""}
+  </div>`;
+  pintarQR();
+}
+async function mensajeSecreto(pjId) {
+  const p = E.grupo[pjId]; if (!p?.jugadorUid) return;
+  const texto = prompt(`Mensaje secreto para ${p.nombre} (solo lo verá su jugador):`);
+  if (!texto || !texto.trim()) return;
+  try { await Nube.agregar(`mesas/${E.mesa.id}/mensajes/${p.jugadorUid}`, { texto: texto.trim(), hora: Date.now(), leido: false }); toast(`Mensaje enviado a ${p.nombre}.`); }
+  catch (e) { console.error(e); toast("No se pudo enviar el mensaje."); }
+}
+
+/* ============ CANDADO DEL PANEL ============ */
+function candado(txt, acciones = "") { $("#candado").classList.remove("fuera"); $("#candado-txt").textContent = txt; $("#candado-acc").innerHTML = acciones; }
+setTimeout(() => {
+  if (!window.Nube && !window.NubeError && !$("#candado").classList.contains("fuera"))
+    candado("No hay conexión con el servidor. Puedes usar el panel solo en este dispositivo.", `<button class="btn laton" data-act="modo-local">Usar sin conexión</button>`);
+}, 6000);
+const alErrorNube = () => { $("#candado").classList.add("fuera"); renderMesa(); toast("Sin conexión: modo local en este dispositivo."); };
+if (window.NubeError) alErrorNube(); else window.addEventListener("nube-error", alErrorNube);
+window.addEventListener("nube-lista", () => {
+  Nube.alCambiarSesion(async u => {
+    if (!u || u.isAnonymous) return candado("Entra con la cuenta de Google del DM para usar el panel.", `<button class="btn laton" data-act="entrar-dm">Entrar con Google</button><a class="btn" href="index.html">Volver al inicio</a>`);
+    candado("Verificando…");
+    if (await Nube.esDM()) {
+      $("#candado").classList.add("fuera");
+      if (E.mesa) conectarMesa();
+      renderMesa();
+    } else candado("Esta cuenta no tiene permiso de DM. El panel es solo para quien dirige la mesa.", `<button class="btn" data-act="salir-cuenta">Usar otra cuenta</button><a class="btn" href="index.html">Volver al inicio</a>`);
+  });
 });
 
 function infoMon() {

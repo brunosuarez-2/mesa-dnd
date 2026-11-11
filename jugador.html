@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mi personaje — La Mesa del Aventurero</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="estilos.css">
+<style>
+  header.sitio { display:flex; align-items:center; gap:12px; padding:16px 18px; border-bottom:1px solid rgba(195,160,106,.16); max-width:760px; margin:0 auto; }
+  header.sitio h1 { flex:1; font-size:1rem; font-weight:500; letter-spacing:.18em; text-transform:uppercase; }
+  .casa { color:var(--oro); display:inline-flex; }
+  main { max-width:760px; margin:0 auto; padding:18px 14px 60px; }
+  .estado-con { font:500 .66rem var(--f-texto); letter-spacing:.14em; text-transform:uppercase; color:var(--crema-suave); text-align:center; margin-bottom:14px; }
+  .estado-con.ok { color:var(--bosque-claro); } .estado-con.err { color:var(--rojo-claro); }
+  section.bloque { margin-bottom:14px; padding:18px; }
+  .bloque h2 { font-size:1.45rem; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+  .bloque h2 .ico { color:var(--borgona); }
+  .ayuda { color:var(--tinta-suave); font-size:.88rem; margin:4px 0 12px; }
+  .campo-codigo { font:500 1.8rem var(--f-titulo); letter-spacing:.3em; text-transform:uppercase; text-align:center; width:100%; }
+
+  /* Cabecera de la ficha: placa oscura */
+  .placa-pj { padding:22px 20px; margin-bottom:14px; }
+  .placa-pj .n { font-family:var(--f-titulo); font-size:2.1rem; line-height:1.05; }
+  .placa-pj .s { color:var(--crema-suave); font-size:.88rem; margin-top:4px; }
+  .placa-pj .mesa { font:500 .64rem var(--f-texto); letter-spacing:.16em; text-transform:uppercase; color:var(--oro); margin-bottom:8px; }
+
+  /* Puntos de golpe */
+  .pg-num { display:flex; align-items:baseline; gap:8px; justify-content:center; margin:4px 0 2px; }
+  .pg-num b { font:500 3.6rem/1 var(--f-titulo); }
+  .pg-num span { font:400 1.6rem var(--f-titulo); color:var(--tinta-suave); }
+  .pg-temp { text-align:center; font-size:.85rem; color:#3a4654; font-weight:600; min-height:1.3em; }
+  .vida { margin:10px 0 14px; height:6px; }
+  .pg-ctrl { display:grid; grid-template-columns: 90px 1fr 1fr 1fr; gap:8px; }
+  .pg-ctrl input { text-align:center; font-size:1.1rem; }
+  .pg-ctrl .btn { padding:10px 6px; }
+  .btn.temp { background:#3a4654; border-color:#3a4654; color:var(--manuscrito); }
+  .muerte { margin-top:14px; padding-top:12px; border-top:1px solid rgba(44,34,25,.18); display:flex; flex-wrap:wrap; gap:10px 18px; align-items:center; font-size:.88rem; }
+
+  /* Rejilla de datos */
+  .datos { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  .dato { text-align:center; padding:10px 4px; border:1px solid rgba(44,34,25,.22); background:transparent; font:inherit; color:inherit; }
+  button.dato { cursor:pointer; } button.dato:hover { border-color:var(--tinta); }
+  .dato b { display:block; font:500 1.6rem/1.1 var(--f-titulo); }
+  .dato span { font:600 .58rem var(--f-texto); letter-spacing:.12em; text-transform:uppercase; color:var(--tinta-suave); }
+  .toggles { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+
+  /* Listas para tirar */
+  .tirar { display:grid; grid-template-columns:1fr auto; gap:0; }
+  .tirar button { all:unset; display:contents; cursor:pointer; }
+  .fila-t { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:9px 4px; border-bottom:1px solid rgba(44,34,25,.14); cursor:pointer; width:100%; background:none; border-left:0; border-right:0; border-top:0; font:inherit; color:inherit; text-align:left; }
+  .fila-t:hover { background:rgba(44,34,25,.05); }
+  .fila-t .nom { flex:1; } .fila-t .nom small { color:var(--tinta-suave); }
+  .fila-t .bon { font:500 1.15rem var(--f-titulo); min-width:2.5em; text-align:right; }
+  .fila-t.comp .nom { font-weight:600; }
+  .fila-t .marca { width:8px; height:8px; border-radius:50%; border:1px solid rgba(44,34,25,.5); flex:none; }
+  .fila-t.comp .marca { background:var(--tinta); }
+  .cars6 { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:6px; }
+  .cars6 button { border:1px solid rgba(44,34,25,.3); background:var(--manuscrito); padding:10px 4px; text-align:center; cursor:pointer; font:inherit; color:inherit; }
+  .cars6 button:hover { border-color:var(--tinta); }
+  .cars6 .n { font:600 .58rem var(--f-texto); letter-spacing:.12em; text-transform:uppercase; color:var(--tinta-suave); }
+  .cars6 .m { font:500 1.7rem/1.1 var(--f-titulo); }
+  .cars6 .v { font-size:.72rem; color:var(--tinta-suave); }
+  .ataque { display:grid; grid-template-columns:1fr auto auto; gap:8px; align-items:center; padding:10px 0; border-bottom:1px solid rgba(44,34,25,.14); }
+  .ataque b { font-weight:600; } .ataque small { color:var(--tinta-suave); display:block; }
+
+  .slots { display:flex; flex-direction:column; gap:8px; }
+  .slots .fila span:first-child { width:52px; font-size:.78rem; color:var(--tinta-suave); }
+  textarea { width:100%; min-height:90px; resize:vertical; }
+  .monedas { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:10px; }
+  .monedas input { width:100%; text-align:center; }
+  ul.rasgos { padding-left:18px; margin:0; font-size:.92rem; } ul.rasgos li { margin:6px 0; line-height:1.45; }
+
+  .msj { padding:10px 12px; border-left:2px solid var(--borgona); background:rgba(122,62,60,.06); margin-bottom:8px; font-size:.95rem; }
+  .msj.leido { border-left-color:rgba(44,34,25,.25); background:transparent; color:var(--tinta-suave); }
+  .msj small { display:block; font-size:.72rem; color:var(--tinta-suave); margin-top:4px; }
+  .msj.yo { border-left-color:var(--oro); }
+  .aviso-msj { background:var(--borgona); color:var(--manuscrito); text-align:center; padding:10px; font-weight:600; font-size:.9rem; margin-bottom:14px; cursor:pointer; }
+
+  /* Resultado de tirada */
+  .tirada { position:fixed; left:50%; bottom:20px; transform:translate(-50%, 20px); z-index:40; width:min(92vw,380px); opacity:0; pointer-events:none;
+    transition:opacity .2s, transform .2s; color:var(--manuscrito); text-align:center; padding:18px 16px 14px; }
+  .tirada.on { opacity:1; transform:translate(-50%,0); pointer-events:auto; }
+  .tirada .que { font:600 .64rem var(--f-texto); letter-spacing:.16em; text-transform:uppercase; color:#c9d1c4; }
+  .tirada .total { font:400 3.4rem/1 var(--f-titulo); margin:6px 0; }
+  .tirada .det { font-size:.85rem; color:#d9e0d2; }
+  .tirada .critico { color:var(--oro); font-weight:600; }
+  .libre { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:12px 0; border-bottom:1px solid rgba(44,34,25,.14); }
+  @media (min-width:700px) { .dos-col { display:grid; grid-template-columns:1fr 1fr; gap:14px; align-items:start; } }
+</style>
+</head>
+<body>
+<script src="ui.js"></script>
+<script type="module" src="firebase.js" onerror="window.NubeError=1;window.dispatchEvent(new Event('nube-error'))"></script>
+
+<header class="sitio">
+  <a class="casa" href="index.html" aria-label="Inicio"><svg class="ico g" aria-hidden="true"><use href="#i-casa"/></svg></a>
+  <h1>Mi personaje</h1>
+  <span id="lectura"></span>
+</header>
+<main>
+  <div class="estado-con" id="estado-con">Conectando…</div>
+  <div id="vista"></div>
+</main>
+<div class="fieltro tirada" id="tirada" role="status" aria-live="polite"></div>
+<div class="toast" id="toast"></div>
+
+<script src="datos.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt = n => (n >= 0 ? "+" : "") + n;
+const d = n => 1 + Math.floor(Math.random() * n);
+const num = (v, def = 0) => { const n = parseInt(v, 10); return Number.isFinite(n) ? n : def; };
+function toast(t) { const el = $("#toast"); el.textContent = t; el.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("on"), 2600); }
+$("#lectura").innerHTML = botonLectura();
+
+const CLAVE = "mesa-dnd-jugador";
+let S = { codigo: null, mesaId: null, info: null, pjs: {}, uid: null, msjs: {}, alDM: {}, unsub: [] };
+try { Object.assign(S, JSON.parse(localStorage.getItem(CLAVE)) || {}); } catch {}
+S.pjs = {}; S.msjs = {}; S.alDM = {}; S.unsub = [];
+const guardarLocal = () => { try { localStorage.setItem(CLAVE, JSON.stringify({ codigo: S.codigo, mesaId: S.mesaId })); } catch {} };
+const miPJ = () => Object.values(S.pjs).find(p => p.jugadorUid === S.uid);
+const ruta = (pj, campo) => `mesas/${S.mesaId}/personajes/${pj.id}${campo ? "/" + campo : ""}`;
+
+const CONDS = ["Agarrado","Apresado","Asustado","Aturdido","Cegado","Derribado","Ensordecido","Envenenado","Hechizado","Incapacitado","Inconsciente","Invisible","Paralizado","Petrificado"];
+
+/* ===================== CONEXIÓN ===================== */
+function estado(t, cls = "") { const el = $("#estado-con"); el.textContent = t; el.className = "estado-con " + cls; }
+const alErrorNube = () => { estado("Sin conexión: necesitas internet para unirte a una mesa", "err"); pintar(); };
+if (window.NubeError) alErrorNube(); else window.addEventListener("nube-error", alErrorNube);
+window.addEventListener("nube-lista", async () => {
+  try {
+    const u = await Nube.entrarAnonimo(); S.uid = u.uid;
+    const param = new URLSearchParams(location.search).get("m");
+    if (param) { S.codigo = param.toUpperCase(); S.mesaId = null; }
+    if (S.codigo) await conectar(S.codigo); else { estado("Conectado"); pintar(); }
+  } catch (e) { console.error(e); estado("No se pudo iniciar sesión", "err"); pintar(); }
+});
+
+async function conectar(codigo) {
+  estado("Buscando la mesa…");
+  const mesaId = await Nube.leer(`codigos/${codigo}`).catch(() => null);
+  if (!mesaId) { S.codigo = null; S.mesaId = null; guardarLocal(); estado("Ese código no existe. Revísalo con tu DM.", "err"); return pintar(); }
+  S.codigo = codigo; S.mesaId = mesaId; guardarLocal();
+  S.unsub.forEach(f => f()); S.unsub = [];
+  S.unsub.push(Nube.escuchar(`mesas/${mesaId}/info`, v => { S.info = v; pintar(); }));
+  S.unsub.push(Nube.escuchar(`mesas/${mesaId}/personajes`, v => { S.pjs = v || {}; pintar(); }));
+  S.unsub.push(Nube.escuchar(`mesas/${mesaId}/mensajes/${S.uid}`, v => {
+    const antes = Object.keys(S.msjs).length; S.msjs = v || {};
+    if (Object.keys(S.msjs).length > antes && antes >= 0 && S._listo) toast("Tienes un mensaje secreto del DM");
+    pintar();
+  }));
+  S.unsub.push(Nube.escuchar(`mesas/${mesaId}/alDM/${S.uid}`, v => { S.alDM = v || {}; pintar(); }));
+  setTimeout(() => S._listo = true, 1500);
+  estado("Conectado a la mesa", "ok");
+}
+
+/* ===================== ESCRITURA ===================== */
+function guardar(campo, valor) {
+  const pj = miPJ(); if (!pj) return;
+  pj[campo] = valor; pintar();
+  Nube.escribir(ruta(pj, campo), valor).catch(e => { console.error(e); toast("No se pudo guardar. ¿Hay internet?"); });
+}
+const temporizadores = {};
+function guardarLento(campo, valor) { clearTimeout(temporizadores[campo]); temporizadores[campo] = setTimeout(() => guardar(campo, valor), 600); }
+
+/* ===================== TIRADAS ===================== */
+function mostrarTirada(que, total, det, extra = "") {
+  const el = $("#tirada");
+  el.innerHTML = `<div class="que">${esc(que)}</div><div class="total">${total}</div><div class="det">${det}</div>${extra}`;
+  el.classList.add("on"); clearTimeout(mostrarTirada.t); mostrarTirada.t = setTimeout(() => el.classList.remove("on"), 5000);
+}
+function tirarD20(que, bono) {
+  const a = d(20); const pj = miPJ(); const agot = pj?.agot || 0; const pen = agot * 2;
+  const total = a + bono - pen;
+  const extra = a === 20 ? `<div class="critico">¡20 natural!</div>` : a === 1 ? `<div class="critico">1 natural</div>` : "";
+  mostrarTirada(que, total, `d20 [${a}] ${fmt(bono)}${pen ? ` − ${pen} (agotamiento)` : ""}`, extra);
+}
+function tirarDados(expr) { // "1d8+3"
+  const m = String(expr).match(/(\d+)d(\d+)\s*([+-]\s*\d+)?/); if (!m) return null;
+  const c = +m[1], l = +m[2], b = m[3] ? +m[3].replace(/\s/g, "") : 0;
+  const r = Array.from({ length: c }, () => d(l));
+  return { total: r.reduce((x, y) => x + y, 0) + b, det: `[${r.join(", ")}]${b ? " " + fmt(b) : ""}`, c, l, b };
+}
+function tirarAtaque(a) {
+  const x = d(20), crit = x === 20;
+  let dm = tirarDados(a.dmg);
+  if (dm && crit) { const extra = Array.from({ length: dm.c }, () => d(dm.l)); dm.total += extra.reduce((p, q) => p + q, 0); dm.det += ` +crítico [${extra.join(", ")}]`; }
+  const tipo = String(a.dmg).replace(/^[\dd+\-\s]+/, "");
+  mostrarTirada(a.n, x + a.atq, `Ataque: d20 [${x}] ${fmt(a.atq)}`,
+    `${crit ? `<div class="critico">¡Golpe crítico!</div>` : x === 1 ? `<div class="critico">Fallo automático</div>` : ""}${dm ? `<div class="det" style="margin-top:6px">Daño si impacta: <b>${dm.total}</b> ${esc(tipo)} · ${dm.det}</div>` : ""}`);
+}
+
+/* ===================== VISTAS ===================== */
+function pintar() {
+  const el = $("#vista");
+  if (!window.Nube) { el.innerHTML = window.NubeError ? `<section class="pergamino bloque"><h2>Sin conexión</h2><p class="ayuda">La hoja en vivo necesita internet. Si no hay, usa tu ficha impresa y avisa al DM.</p></section>` : ""; return; }
+  if (!S.mesaId) return el.innerHTML = vistaCodigo();
+  const pj = miPJ();
+  if (!pj) return el.innerHTML = vistaElegir();
+  el.innerHTML = vistaHoja(pj);
+}
+function vistaCodigo() {
+  return `<section class="pergamino bloque">
+    <span class="eyebrow">Unirse a la mesa</span>
+    <h2>Escribe el código de tu mesa</h2>
+    <p class="ayuda">Te lo da el DM (o escanea su código QR). Son 6 letras.</p>
+    <input id="codigo" class="campo-codigo" maxlength="6" autocomplete="off" autocapitalize="characters" placeholder="ABC123" value="${esc(S.codigo || "")}">
+    <div style="margin-top:14px"><button class="btn laton ancho" data-a="unirse">Unirme</button></div>
+  </section>`;
+}
+function vistaElegir() {
+  const libres = Object.values(S.pjs).filter(p => !p.jugadorUid);
+  return `<div class="cuero placa-pj"><div class="mesa">${esc(S.info?.nombre || "Mesa")} · código ${esc(S.codigo)}</div><div class="n">¡Bienvenido!</div><div class="s">Elige tu personaje para esta aventura.</div></div>
+  <section class="pergamino bloque">
+    <h2>${ico("pluma")} Crear uno nuevo</h2>
+    <p class="ayuda">Al azar en 2 minutos o eligiendo tú. Al terminar aparece aquí solo.</p>
+    <a class="btn laton ancho" href="crear.html?m=${encodeURIComponent(S.codigo)}">Crear mi personaje</a>
+  </section>
+  <section class="pergamino bloque">
+    <h2>${ico("grupo")} O usa uno de la mesa</h2>
+    <p class="ayuda">Personajes que el DM preparó y que nadie ha tomado.</p>
+    ${libres.length ? libres.map(p => `<div class="libre"><div><b>${esc(p.nombre)}</b><div class="ayuda" style="margin:0">${esc(p.clase || "")} ${p.nivel ? "nivel " + p.nivel : ""}</div></div><button class="btn tinta chico" data-a="tomar" data-id="${p.id}">Tomar</button></div>`).join("") : `<p class="ayuda">No hay personajes libres ahora mismo.</p>`}
+  </section>
+  <p style="text-align:center"><button class="btn chico" data-a="cambiar-mesa">Cambiar de mesa</button></p>`;
+}
+function vistaHoja(pj) {
+  const F = pj.ficha || {};
+  const pct = pj.pgMax ? Math.max(0, Math.min(100, pj.pg / pj.pgMax * 100)) : 0;
+  const muerte = pj.muerte || { ok: 0, ko: 0 };
+  const cond = pj.condiciones || {};
+  const activas = CONDS.filter(c => cond[c]);
+  const dg = pj.dg || { max: pj.nivel || 1, usados: 0 };
+  const espacios = Object.entries(pj.espacios || {}).filter(([, s]) => s.max > 0);
+  const msjs = Object.entries(S.msjs).sort((a, b) => (b[1].hora || 0) - (a[1].hora || 0));
+  const noLeidos = msjs.filter(([, m]) => !m.leido).length;
+  const enviados = Object.values(S.alDM).sort((a, b) => (b.hora || 0) - (a.hora || 0));
+  const mon = pj.monedas || {};
+  const C = F.cars || {};
+
+  return `
+  ${noLeidos ? `<div class="aviso-msj" data-a="ir-msj">${ico("sobre")} Tienes ${noLeidos} mensaje${noLeidos > 1 ? "s" : ""} secreto${noLeidos > 1 ? "s" : ""} del DM</div>` : ""}
+  <div class="cuero placa-pj">
+    <div class="mesa">${esc(S.info?.nombre || "Mesa")} · código ${esc(S.codigo)}</div>
+    <div class="n">${esc(pj.nombre)}</div>
+    <div class="s">${esc(pj.clase || "")} nivel ${pj.nivel || 1}${F.especie ? " · " + esc(F.especie) : ""}${F.trasfondo ? " · " + esc(F.trasfondo) : ""}</div>
+  </div>
+
+  <section class="pergamino bloque">
+    <h2>${ico("corazon")} Puntos de golpe</h2>
+    ${!localStorage.getItem("mesa-dnd-pg-visto") ? `<p class="ayuda">Tu vida: si llegan a 0, caes inconsciente.</p>` : ""}
+    <div class="pg-num"><b>${pj.pg}</b><span>/ ${pj.pgMax}</span></div>
+    <div class="pg-temp">${pj.pgTemp ? `+${pj.pgTemp} temporales` : ""}</div>
+    <div class="vida"><i class="${pct <= 25 ? "l" : pct <= 50 ? "m" : ""}" style="width:${pct}%"></i></div>
+    <div class="pg-ctrl">
+      <input type="number" min="0" id="pg-cant" placeholder="#" aria-label="Cantidad">
+      <button class="btn borgona" data-a="pg" data-m="dano">Daño</button>
+      <button class="btn bosque" data-a="pg" data-m="curar">Curar</button>
+      <button class="btn temp" data-a="pg" data-m="temp">Temp</button>
+    </div>
+    ${pj.pg === 0 ? `<div class="muerte"><b>Salvación contra muerte</b>
+      <span>Éxitos <span class="pips">${[0,1,2].map(i => `<button class="pip ${i < muerte.ok ? "ok" : ""}" data-a="muerte" data-t="ok" data-i="${i}" aria-label="Éxito ${i + 1}"></button>`).join("")}</span></span>
+      <span>Fallos <span class="pips">${[0,1,2].map(i => `<button class="pip ${i < muerte.ko ? "ko" : ""}" data-a="muerte" data-t="ko" data-i="${i}" aria-label="Fallo ${i + 1}"></button>`).join("")}</span></span>
+      <button class="btn tinta chico" data-a="tirar-muerte">Tirar d20</button></div>` : ""}
+  </section>
+
+  <section class="pergamino bloque">
+    <div class="datos">
+      <div class="dato"><b>${pj.ca}</b><span>Clase de armadura</span></div>
+      <button class="dato" data-a="ini"><b>${fmt(pj.bono || 0)}</b><span>Iniciativa · tirar</span></button>
+      <div class="dato"><b>${F.vel || 30}</b><span>Velocidad</span></div>
+      <div class="dato"><b>+${F.pb || 2}</b><span>Competencia</span></div>
+    </div>
+    <div class="toggles">
+      <span class="chip ${pj.insp ? "on" : ""}" data-a="insp">${pj.insp ? "Tienes inspiración heroica" : "Sin inspiración heroica"}</span>
+      <span class="chip ${pj.conc ? "conc" : ""}" data-a="conc">${pj.conc ? "Concentrando" : "Sin concentración"}</span>
+    </div>
+    <details style="margin-top:10px"><summary>Condiciones ${activas.length || pj.agot ? `<b style="color:var(--borgona)">· ${[...activas, pj.agot ? "Agotamiento " + pj.agot : ""].filter(Boolean).join(", ")}</b>` : ""}</summary>
+      <div class="chips" style="margin-top:10px">${CONDS.map(c => `<span class="chip ${cond[c] ? "on" : ""}" data-a="cond" data-c="${c}">${c}</span>`).join("")}</div>
+      <div class="fila" style="margin-top:10px"><span class="ayuda" style="margin:0">Agotamiento:</span>
+        <button class="btn tinta chico" data-a="agot" data-d="-1">−</button><b>${pj.agot || 0}</b><button class="btn tinta chico" data-a="agot" data-d="1">+</button></div>
+    </details>
+  </section>
+
+  ${espacios.length ? `<section class="pergamino bloque">
+    <h2>${ico("gema")} Espacios de conjuro</h2>
+    <p class="ayuda">Toca un rombo para gastarlo; toca uno vacío para recuperarlo.</p>
+    <div class="slots">${espacios.map(([n, s]) => `<div class="fila"><span>Nivel ${n}</span><span class="pips">${Array.from({ length: s.max }, (_, i) =>
+      `<button class="pip slot ${i < s.max - (s.usados || 0) ? "libre" : ""}" data-a="slot" data-n="${n}" data-i="${i}" aria-label="Espacio de nivel ${n}"></button>`).join("")}</span></div>`).join("")}</div>
+    ${F.magia ? `<p class="ayuda" style="margin-top:12px">CD de tus conjuros <b>${F.magia.cd}</b> · Ataque de conjuro <b>${fmt(F.magia.atq)}</b></p>` : ""}
+  </section>` : ""}
+
+  <section class="pergamino bloque">
+    <h2>${ico("reloj")} Descansos</h2>
+    <p class="ayuda">Dados de golpe disponibles: <b>${dg.max - (dg.usados || 0)} de ${dg.max}</b> (d${F.dgDado || 8}). En un descanso corto puedes gastarlos para curarte.</p>
+    <div class="fila">
+      <button class="btn tinta" data-a="corto">Descanso corto</button>
+      <button class="btn tinta" data-a="largo">Descanso largo</button>
+    </div>
+  </section>
+
+  ${F.armas?.length ? `<section class="pergamino bloque"><h2>${ico("espadas")} Ataques</h2><p class="ayuda">Toca un ataque para tirarlo.</p>
+    ${F.armas.map((a, i) => `<div class="ataque" role="button" tabindex="0" data-a="atacar" data-i="${i}" style="cursor:pointer"><div><b>${esc(a.n)}</b><small>${esc(a.dmg)}</small></div><span class="estampa tinta">${fmt(a.atq)}</span>${ico("dado")}</div>`).join("")}
+  </section>` : ""}
+
+  ${F.cars ? `<div class="dos-col">
+  <section class="pergamino bloque"><h2>${ico("dado")} Pruebas</h2><p class="ayuda">Toca para tirar 1d20 + tu bonificador.</p>
+    <div class="cars6">${Object.entries(C).map(([k, c]) => `<button data-a="d20" data-q="Prueba de ${esc(c.nom || k)}" data-b="${c.m}"><div class="n">${esc(c.nom || k)}</div><div class="m">${fmt(c.m)}</div><div class="v">${c.v}</div></button>`).join("")}</div>
+    <h3 style="font:600 .64rem var(--f-texto);letter-spacing:.16em;text-transform:uppercase;color:var(--borgona);margin:16px 0 4px">Salvaciones</h3>
+    ${(F.salv || []).map(s => `<button class="fila-t ${s.comp ? "comp" : ""}" data-a="d20" data-q="Salvación de ${esc(s.n)}" data-b="${s.b}"><span class="marca"></span><span class="nom">${esc(s.n)}</span><span class="bon">${fmt(s.b)}</span></button>`).join("")}
+  </section>
+  <section class="pergamino bloque"><h2>${ico("brujula")} Habilidades</h2><p class="ayuda">El punto relleno indica que eres competente.</p>
+    ${(F.habs || []).map(h => `<button class="fila-t ${h.comp ? "comp" : ""}" data-a="d20" data-q="${esc(h.n)}" data-b="${h.b}"><span class="marca"></span><span class="nom">${esc(h.n)} <small>(${esc(h.car)})</small></span><span class="bon">${fmt(h.b)}</span></button>`).join("")}
+    <p class="ayuda" style="margin-top:10px">Percepción pasiva: <b>${F.percPas ?? "—"}</b></p>
+  </section></div>` : ""}
+
+  ${F.rasgos?.length ? `<section class="pergamino bloque"><details><summary style="font-family:var(--f-titulo);font-size:1.45rem;color:var(--tinta)">Rasgos y dotes</summary><ul class="rasgos">${F.rasgos.map(r => `<li>${r}</li>`).join("")}</ul></details></section>` : ""}
+
+  <section class="pergamino bloque">
+    <h2>${ico("bolsa")} Inventario</h2>
+    <div class="monedas">
+      <label class="campo">Oro (po)<input type="number" min="0" data-moneda="po" value="${num(mon.po)}"></label>
+      <label class="campo">Plata (pp)<input type="number" min="0" data-moneda="pp" value="${num(mon.pp)}"></label>
+      <label class="campo">Cobre (pc)<input type="number" min="0" data-moneda="pc" value="${num(mon.pc)}"></label>
+    </div>
+    <textarea id="inventario" placeholder="Lo que llevas: armas, pociones, cuerda, objetos raros…">${esc(pj.inventario ?? (F.equipo || []).join("\n"))}</textarea>
+  </section>
+
+  <section class="pergamino bloque">
+    <h2>${ico("pluma")} Mis notas</h2>
+    <textarea id="notas" placeholder="Nombres, pistas, lo que no quieres olvidar…">${esc(pj.notasJugador || "")}</textarea>
+  </section>
+
+  <section class="pergamino bloque" id="mensajes">
+    <h2>${ico("sobre")} Mensajes secretos</h2>
+    ${msjs.length ? msjs.map(([id, m]) => `<div class="msj ${m.leido ? "leido" : ""}">${esc(m.texto)}<small>Del DM${m.leido ? "" : ` · <a href="#" data-a="leido" data-id="${id}" style="color:var(--borgona)">Marcar como leído</a>`}</small></div>`).join("") : `<p class="ayuda">Aquí aparecerá lo que el DM te diga en secreto. Nadie más lo ve.</p>`}
+    <h3 style="font:600 .64rem var(--f-texto);letter-spacing:.16em;text-transform:uppercase;color:var(--borgona);margin:16px 0 8px">Escribirle al DM en secreto</h3>
+    <textarea id="al-dm" style="min-height:60px" placeholder="Ej.: Quiero robarle la bolsa al mercader sin que nadie vea."></textarea>
+    <div style="margin-top:8px"><button class="btn tinta chico" data-a="enviar-dm">Enviar al DM</button></div>
+    ${enviados.length ? enviados.slice(0, 5).map(m => `<div class="msj yo leido" style="margin-top:8px">${esc(m.texto)}<small>Enviado por ti</small></div>`).join("") : ""}
+  </section>
+
+  <p style="text-align:center"><button class="btn chico" data-a="soltar">Dejar este personaje</button> <button class="btn chico" data-a="cambiar-mesa">Cambiar de mesa</button></p>`;
+}
+
+/* ===================== EVENTOS ===================== */
+document.addEventListener("click", async e => {
+  const t = e.target.closest("[data-a]"); if (!t) return;
+  if (t.tagName === "A" && t.getAttribute("href") === "#") e.preventDefault();
+  const pj = miPJ();
+  switch (t.dataset.a) {
+    case "unirse": { const c = ($("#codigo").value || "").trim().toUpperCase(); if (c.length < 4) return toast("Escribe el código completo."); await conectar(c); break; }
+    case "cambiar-mesa": S.unsub.forEach(f => f()); S.unsub = []; S.mesaId = null; S.codigo = null; S.pjs = {}; guardarLocal(); history.replaceState(null, "", "jugador.html"); pintar(); break;
+    case "tomar":
+      try { await Nube.escribir(`mesas/${S.mesaId}/personajes/${t.dataset.id}/jugadorUid`, S.uid); toast("¡Personaje tuyo!"); }
+      catch { toast("Alguien lo tomó antes. Elige otro."); } break;
+    case "soltar":
+      if (!confirm("¿Dejar este personaje? Quedará libre para otro jugador.")) return;
+      await Nube.borrar(ruta(pj, "jugadorUid")); break;
+    case "pg": {
+      const cant = num($("#pg-cant").value); if (!cant || cant < 0) return toast("Escribe una cantidad.");
+      try { localStorage.setItem("mesa-dnd-pg-visto", "1"); } catch {}
+      let pg = pj.pg, temp = pj.pgTemp || 0, muerte = pj.muerte || { ok: 0, ko: 0 };
+      if (t.dataset.m === "dano") {
+        let resto = cant; const abs = Math.min(temp, resto); temp -= abs; resto -= abs;
+        if (pg === 0 && resto > 0) { muerte = { ...muerte, ko: Math.min(3, (muerte.ko || 0) + 1) }; guardar("muerte", muerte); toast("Daño estando a 0: +1 fallo"); }
+        pg = Math.max(0, pg - resto);
+        if (pj.conc && resto > 0) toast(`Concentración: salvación de Constitución CD ${Math.min(30, Math.max(10, Math.floor(resto / 2)))}`);
+      } else if (t.dataset.m === "curar") { if (pg === 0) guardar("muerte", { ok: 0, ko: 0 }); pg = Math.min(pj.pgMax, pg + cant); }
+      else temp = Math.max(temp, cant);
+      if (pg !== pj.pg) guardar("pg", pg); if (temp !== (pj.pgTemp || 0)) guardar("pgTemp", temp);
+      break;
+    }
+    case "muerte": { const m = { ok: 0, ko: 0, ...(pj.muerte || {}) }, k = t.dataset.t, i = +t.dataset.i; m[k] = m[k] === i + 1 ? i : i + 1; guardar("muerte", m); break; }
+    case "tirar-muerte": {
+      const x = d(20), m = { ok: 0, ko: 0, ...(pj.muerte || {}) };
+      if (x === 20) { guardar("muerte", { ok: 0, ko: 0 }); guardar("pg", 1); mostrarTirada("Salvación contra muerte", x, "¡20 natural! Recuperas 1 punto de golpe."); }
+      else { if (x === 1) m.ko = Math.min(3, m.ko + 2); else if (x >= 10) m.ok = Math.min(3, m.ok + 1); else m.ko = Math.min(3, m.ko + 1);
+        guardar("muerte", m); mostrarTirada("Salvación contra muerte", x, x >= 10 ? "Éxito" : x === 1 ? "1 natural: dos fallos" : "Fallo",
+          m.ok >= 3 ? `<div class="critico">Te estabilizas</div>` : m.ko >= 3 ? `<div class="critico">Tu personaje muere</div>` : ""); }
+      break;
+    }
+    case "ini": tirarD20("Iniciativa", pj.bono || 0); break;
+    case "insp": guardar("insp", !pj.insp); break;
+    case "conc": guardar("conc", !pj.conc); break;
+    case "cond": guardar("condiciones", { ...(pj.condiciones || {}), [t.dataset.c]: !(pj.condiciones || {})[t.dataset.c] }); break;
+    case "agot": { const v = Math.max(0, Math.min(6, (pj.agot || 0) + num(t.dataset.d))); guardar("agot", v); if (v === 6) toast("Agotamiento 6: tu personaje muere."); break; }
+    case "slot": {
+      const esp = JSON.parse(JSON.stringify(pj.espacios || {})); const s = esp[t.dataset.n]; if (!s) break;
+      const libre = +t.dataset.i < s.max - (s.usados || 0);
+      s.usados = Math.max(0, Math.min(s.max, (s.usados || 0) + (libre ? 1 : -1))); guardar("espacios", esp); break;
+    }
+    case "corto": {
+      const dg = { max: pj.nivel || 1, usados: 0, ...(pj.dg || {}) }; const disp = dg.max - dg.usados;
+      if (!disp) return toast("No te quedan dados de golpe. Se recuperan con un descanso largo.");
+      const n = num(prompt(`¿Cuántos dados de golpe quieres gastar? (tienes ${disp})`, "1"));
+      if (!n || n < 1) return; const usar = Math.min(n, disp), con = pj.ficha?.cars?.CON?.m || 0, dado = pj.ficha?.dgDado || 8;
+      const r = Array.from({ length: usar }, () => d(dado)); const cura = Math.max(0, r.reduce((a, b) => a + b, 0) + con * usar);
+      guardar("dg", { ...dg, usados: dg.usados + usar }); guardar("pg", Math.min(pj.pgMax, pj.pg + cura));
+      mostrarTirada("Descanso corto", `+${cura}`, `${usar}d${dado} [${r.join(", ")}] ${con ? `${fmt(con)} × ${usar}` : ""}`); break;
+    }
+    case "largo": {
+      if (!confirm("¿Descanso largo? Recuperas todos tus puntos de golpe, espacios de conjuro y dados de golpe.")) return;
+      const esp = JSON.parse(JSON.stringify(pj.espacios || {})); Object.values(esp).forEach(s => s.usados = 0);
+      guardar("pg", pj.pgMax); guardar("pgTemp", 0); guardar("espacios", esp); guardar("dg", { max: pj.nivel || 1, usados: 0 });
+      guardar("muerte", { ok: 0, ko: 0 }); if (pj.agot) guardar("agot", pj.agot - 1);
+      toast("Descanso largo completado."); break;
+    }
+    case "atacar": tirarAtaque(pj.ficha.armas[+t.dataset.i]); break;
+    case "d20": tirarD20(t.dataset.q, num(t.dataset.b)); break;
+    case "ir-msj": $("#mensajes").scrollIntoView({ behavior: "smooth" }); break;
+    case "leido": await Nube.escribir(`mesas/${S.mesaId}/mensajes/${S.uid}/${t.dataset.id}/leido`, true); break;
+    case "enviar-dm": {
+      const texto = ($("#al-dm").value || "").trim(); if (!texto) return;
+      await Nube.agregar(`mesas/${S.mesaId}/alDM/${S.uid}`, { texto, hora: Date.now(), pj: pj.nombre });
+      toast("Mensaje enviado al DM."); break;
+    }
+  }
+});
+document.addEventListener("input", e => {
+  const t = e.target, pj = miPJ(); if (!pj) return;
+  if (t.id === "inventario") guardarLento("inventario", t.value);
+  if (t.id === "notas") guardarLento("notasJugador", t.value);
+  if (t.dataset.moneda) guardarLento("monedas", { ...(pj.monedas || {}), [t.dataset.moneda]: Math.max(0, num(t.value)) });
+});
+document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.id === "codigo") document.querySelector("[data-a=unirse]")?.click(); });
+// Evita repintar mientras se escribe en un campo de texto
+const pintarOriginal = pintar;
+pintar = function () {
+  const a = document.activeElement;
+  if (a && (a.tagName === "TEXTAREA" || (a.tagName === "INPUT" && a.type !== "checkbox")) && a.id !== "codigo") { pintar.pendiente = true; return; }
+  pintarOriginal();
+};
+document.addEventListener("focusout", () => setTimeout(() => { if (pintar.pendiente) { pintar.pendiente = false; pintarOriginal(); } }, 50));
+pintar();
+</script>
+</body>
+</html>
