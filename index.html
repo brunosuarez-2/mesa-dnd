@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mesa D&D — Prueba de conexión</title>
+<style>
+  :root { --bg:#16131a; --card:#221d27; --txt:#ece6f2; --mut:#a89cb5; --acc:#c9a24a; --ok:#5fbf7a; --err:#e06464; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui,-apple-system,sans-serif; background:var(--bg); color:var(--txt); padding:20px; }
+  main { max-width:520px; margin:0 auto; }
+  h1 { font-size:1.4rem; margin:0 0 4px; }
+  p.sub { color:var(--mut); margin:0 0 20px; font-size:.95rem; }
+  .card { background:var(--card); border-radius:12px; padding:16px; margin-bottom:14px; }
+  .card h2 { font-size:1rem; margin:0 0 10px; color:var(--acc); }
+  button { width:100%; padding:14px; margin:6px 0; border:0; border-radius:10px; font-size:1rem; font-weight:600; cursor:pointer; }
+  .dm { background:var(--acc); color:#1a1408; }
+  .pj { background:#3b3346; color:var(--txt); }
+  .sec { background:transparent; color:var(--mut); border:1px solid #3b3346; }
+  code { display:block; background:#0f0d12; padding:10px; border-radius:8px; word-break:break-all; font-size:.9rem; margin:8px 0; }
+  .row { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #2e2836; font-size:.95rem; }
+  .ok { color:var(--ok); } .err { color:var(--err); } .mut { color:var(--mut); }
+  .hidden { display:none; }
+</style>
+</head>
+<body>
+<main>
+  <h1>🎲 Mesa D&D</h1>
+  <p class="sub">Página de prueba: comprueba que Firebase está bien configurado.</p>
+
+  <div class="card">
+    <h2>1. Estado</h2>
+    <div class="row"><span>Configuración</span><span id="st-config" class="mut">…</span></div>
+    <div class="row"><span>Sesión</span><span id="st-auth" class="mut">sin iniciar</span></div>
+    <div class="row"><span>Base de datos</span><span id="st-db" class="mut">sin probar</span></div>
+  </div>
+
+  <div class="card" id="login">
+    <h2>2. Entrar</h2>
+    <button class="dm" id="btn-dm">Entrar como DM (Google)</button>
+    <button class="pj" id="btn-pj">Entrar como jugador (anónimo)</button>
+  </div>
+
+  <div class="card hidden" id="info">
+    <h2>3. Tu ID de usuario</h2>
+    <p class="mut" id="tipo"></p>
+    <code id="uid"></code>
+    <button class="sec" id="btn-copy">Copiar ID</button>
+    <button class="sec" id="btn-test">Probar base de datos</button>
+    <button class="sec" id="btn-out">Cerrar sesión</button>
+  </div>
+
+  <p class="mut" id="msg"></p>
+</main>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signInAnonymously, onAuthStateChanged, signOut }
+    from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
+  import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-database.js";
+  import { firebaseConfig } from "./config.js";
+
+  const $ = id => document.getElementById(id);
+  const setSt = (id, text, cls) => { $(id).textContent = text; $(id).className = cls; };
+  const msg = t => { $("msg").textContent = t; };
+
+  const configOk = Object.values(firebaseConfig).every(v => v && !String(v).includes("PEGA_AQUI"));
+  if (!configOk) {
+    setSt("st-config", "faltan datos en config.js", "err");
+    msg("Abre config.js y reemplaza todos los PEGA_AQUI con los datos de Firebase.");
+  } else {
+    setSt("st-config", "OK", "ok");
+  }
+
+  let auth, db;
+  try {
+    const app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getDatabase(app);
+  } catch (e) {
+    setSt("st-config", "error", "err");
+    msg("Error al iniciar Firebase: " + e.message);
+  }
+
+  const explain = e => {
+    const c = e.code || "";
+    if (c.includes("operation-not-allowed")) return "Ese método de inicio de sesión no está activado (guía, paso A3).";
+    if (c.includes("unauthorized-domain")) return "Falta autorizar este dominio en Firebase (guía, paso B4).";
+    if (c.includes("popup-blocked")) return "El navegador bloqueó la ventana emergente. Permite pop-ups e inténtalo de nuevo.";
+    if (c.includes("popup-closed")) return "Cerraste la ventana antes de terminar.";
+    if (c.includes("PERMISSION_DENIED") || String(e.message).includes("Permission denied"))
+      return "Permiso denegado: faltan las reglas de prueba en Realtime Database → Reglas.";
+    return (c ? c + ": " : "") + e.message;
+  };
+
+  $("btn-dm").onclick = async () => {
+    try { await signInWithPopup(auth, new GoogleAuthProvider()); msg(""); }
+    catch (e) { msg(explain(e)); }
+  };
+  $("btn-pj").onclick = async () => {
+    try { await signInAnonymously(auth); msg(""); }
+    catch (e) { msg(explain(e)); }
+  };
+  $("btn-out").onclick = () => signOut(auth);
+  $("btn-copy").onclick = async () => {
+    try { await navigator.clipboard.writeText($("uid").textContent); msg("ID copiado."); }
+    catch { msg("No se pudo copiar automáticamente: selecciona el ID y cópialo a mano."); }
+  };
+  $("btn-test").onclick = async () => {
+    const u = auth.currentUser;
+    if (!u) return;
+    setSt("st-db", "probando…", "mut");
+    try {
+      const r = ref(db, "pruebas/" + u.uid);
+      const stamp = new Date().toISOString();
+      await set(r, { hora: stamp });
+      const snap = await get(r);
+      if (snap.val()?.hora === stamp) { setSt("st-db", "OK — lee y escribe", "ok"); msg("¡Todo conectado!"); }
+      else { setSt("st-db", "respuesta inesperada", "err"); }
+    } catch (e) {
+      setSt("st-db", "error", "err");
+      msg(explain(e));
+    }
+  };
+
+  if (auth) onAuthStateChanged(auth, user => {
+    if (user) {
+      setSt("st-auth", user.isAnonymous ? "jugador (anónimo)" : "DM (Google)", "ok");
+      $("tipo").textContent = user.isAnonymous
+        ? "Sesión de jugador anónimo. Este ID cambia si cierras sesión."
+        : "Sesión de DM. Este es el ID que necesito para las reglas definitivas.";
+      $("uid").textContent = user.uid;
+      $("login").classList.add("hidden");
+      $("info").classList.remove("hidden");
+    } else {
+      setSt("st-auth", "sin iniciar", "mut");
+      setSt("st-db", "sin probar", "mut");
+      $("login").classList.remove("hidden");
+      $("info").classList.add("hidden");
+    }
+  });
+</script>
+</body>
+</html>
