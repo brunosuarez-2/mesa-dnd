@@ -365,6 +365,7 @@
 <div class="toast" id="toast"></div>
 
 <script src="datos.js"></script>
+<script src="conjuros.js"></script>
 <script>
 /* ============ DATOS DE REFERENCIA (SRD 5.2.1, traducción propia) ============ */
 const CONDICIONES = [
@@ -613,7 +614,7 @@ function renderCombate() {
     return `
     <div class="card ${turno ? "turno" : ""} ${f.pg <= 0 ? "caido" : ""}">
       <div class="row">
-        <input class="ini" type="number" value="${c.ini ?? ""}" data-campo="ini" data-id="${c.id}" aria-label="Iniciativa">
+        <input class="ini" id="ini-${c.id}" type="number" value="${c.ini ?? ""}" data-campo="ini" data-id="${c.id}" aria-label="Iniciativa">
         <div class="grow">
           <div class="row"><span class="nombre">${esc(c.nombre)}</span><span class="badge b-${c.tipo}">${c.tipo}</span></div>
           <div class="stat">CA <b>${f.ca}</b> · PG <b>${f.pg}</b>/${f.pgMax}${f.pgTemp ? ` <span style="color:#9b97ff">+${f.pgTemp} temp</span>` : ""}</div>
@@ -649,6 +650,10 @@ function renderGrupo() {
       </div>
       ${barra(p)}
       ${slotsHTML(p, "pj")}
+      ${p.conjuros ? `<details><summary>Conjuros${typeof p.conc === "string" ? ` · <b style="color:var(--ambar-tinta)">concentrado en ${esc(p.conc)}</b>` : ""}</summary><p class="stat" style="margin:6px 0 0;line-height:1.5">
+        ${(p.conjuros.trucos || []).length ? `<b>Trucos:</b> ${p.conjuros.trucos.map(i => CONJUROS[i]?.n || i).join(", ")}<br>` : ""}
+        <b>Preparados:</b> ${[...(p.conjuros.siempre || []), ...(p.conjuros.preparados || [])].map(i => CONJUROS[i]?.n || i).join(", ") || "—"}
+        ${p.ficha?.magia ? `<br>CD ${p.ficha.magia.cd} · ataque ${p.ficha.magia.atq >= 0 ? "+" : ""}${p.ficha.magia.atq}` : ""}</p></details>` : ""}
       ${p.notas ? `<p class="stat" style="margin:8px 0 0">${esc(p.notas)}</p>` : ""}
       <div class="row" style="margin-top:8px">
         ${ONLINE && p.jugadorUid ? `<button class="b s" data-act="secreto" data-pj="${p.id}">${ico("sobre")} Mensaje secreto</button>` : ""}
@@ -908,6 +913,13 @@ const limpio = v => JSON.parse(JSON.stringify(v));
 const rutaPJ = id => `mesas/${E.mesa.id}/personajes/${id}`;
 const escribiendo = () => { const a = document.activeElement; return a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && !a.closest("dialog"); };
 
+function renderConservando() {
+  const a = document.activeElement;
+  const id = a && a.id && /^(INPUT|TEXTAREA)$/.test(a.tagName) && !a.closest("dialog") ? a.id : null;
+  const val = id ? a.value : null;
+  render();
+  if (id) { const n = document.getElementById(id); if (n) { n.value = val; n.focus({ preventScroll: true }); } }
+}
 function subir() {
   if (!ONLINE || !window.Nube) return;
   for (const [id, p] of Object.entries(E.grupo)) {
@@ -929,7 +941,7 @@ function conectarMesa() {
     E.grupo = v || {};
     ultimo = Object.fromEntries(Object.entries(E.grupo).map(([k, p]) => [k, Object.fromEntries(Object.entries(p).map(([c, x]) => [c, norm(x)]))]));
     ONLINE = true;
-    if (escribiendo()) renderPendiente = true; else render();
+    renderConservando();
   }));
   desuscribir.push(Nube.escuchar(`mesas/${id}/jugadores`, v => { jugadoresMesa = v || {}; renderMesa(); }));
   desuscribir.push(Nube.escuchar(`mesas/${id}/alDM`, v => {

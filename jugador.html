@@ -86,6 +86,18 @@
   .tirada .total { font:400 3.4rem/1 var(--f-titulo); margin:6px 0; }
   .tirada .det { font-size:.85rem; color:#d9e0d2; }
   .tirada .critico { color:var(--oro); font-weight:600; }
+  details.conjuro { border-bottom:1px solid rgba(44,34,25,.14); }
+  details.conjuro > summary { padding:10px 2px; display:flex; align-items:center; gap:8px; }
+  details.conjuro > summary::before { order:9; margin-left:auto; }
+  details.conjuro .cn { font-family:var(--f-titulo); font-size:1.2rem; font-weight:600; }
+  details.conjuro .cd { padding:0 2px 12px; font-size:.92rem; }
+  details.conjuro .cd p { margin:6px 0 10px; }
+  details.conjuro .meta { font-size:.78rem; color:var(--tinta-suave); }
+  .sub-t { font:600 .64rem var(--f-texto); letter-spacing:.16em; text-transform:uppercase; color:var(--borgona); margin:18px 0 4px; }
+  .aviso-conc { background:rgba(194,139,72,.14); border-left:2px solid var(--ambar); padding:8px 10px; font-size:.88rem; }
+  .check-c { display:flex; gap:10px; align-items:flex-start; padding:10px 8px; border-bottom:1px solid rgba(44,34,25,.14); cursor:pointer; }
+  .check-c.sel { background:rgba(122,62,60,.06); }
+  .check-c small { display:block; color:var(--tinta-suave); font-size:.82rem; margin-top:2px; }
   .libre { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:12px 0; border-bottom:1px solid rgba(44,34,25,.14); }
   @media (min-width:700px) { .dos-col { display:grid; grid-template-columns:1fr 1fr; gap:14px; align-items:start; } }
 </style>
@@ -107,6 +119,7 @@
 <div class="toast" id="toast"></div>
 
 <script src="datos.js"></script>
+<script src="conjuros.js"></script>
 <script>
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -191,6 +204,82 @@ function tirarAtaque(a) {
   const tipo = String(a.dmg).replace(/^[\dd+\-\s]+/, "");
   mostrarTirada(a.n, x + a.atq, `Ataque: d20 [${x}] ${fmt(a.atq)}`,
     `${crit ? `<div class="critico">¡Golpe crítico!</div>` : x === 1 ? `<div class="critico">Fallo automático</div>` : ""}${dm ? `<div class="det" style="margin-top:6px">Daño si impacta: <b>${dm.total}</b> ${esc(tipo)} · ${dm.det}</div>` : ""}`);
+}
+
+
+/* ===================== CONJUROS ===================== */
+const CLASE_KEY = { "Bardo":"bardo","Clérigo":"clerigo","Druida":"druida","Paladín":"paladin","Explorador":"explorador","Hechicero":"hechicero","Brujo":"brujo","Mago":"mago" };
+let editandoConjuros = false;
+const CAR_LARGO = { FUE:"Fuerza", DES:"Destreza", CON:"Constitución", INT:"Inteligencia", SAB:"Sabiduría", CAR:"Carisma" };
+const modMagico = pj => { const F = pj.ficha || {}; return F.magia ? (F.cars?.[F.magia.car]?.m || 0) : 0; };
+function tarjetaConjuro(pj, s, esTruco) {
+  const F = pj.ficha || {}, T = s.tirada;
+  const meta = `${s.tiempo} · ${s.alcance} · ${s.dur}${s.ritual ? " · Ritual" : ""}`;
+  return `<details class="conjuro"><summary><span class="cn">${s.n}</span>${s.conc ? `<span class="estampa ambar">Conc.</span>` : ""}</summary>
+    <div class="cd"><div class="meta">${meta} · ${s.comp}</div><p>${s.efecto}</p>
+      ${T?.salv ? `<p class="meta">Salvación de ${CAR_LARGO[T.salv]} contra CD <b>${F.magia?.cd ?? "—"}</b></p>` : ""}
+      <div class="fila">
+        <button class="btn ${esTruco ? "tinta" : "laton"} chico" data-a="lanzar" data-id="${s.id}" data-truco="${esTruco ? 1 : 0}">${esTruco ? "Usar" : "Lanzar"}</button>
+        ${!esTruco && s.ritual ? `<button class="btn tinta chico" data-a="ritual" data-id="${s.id}">Como ritual</button>` : ""}
+      </div></div></details>`;
+}
+function seccionConjuros(pj) {
+  const C = pj.conjuros, F = pj.ficha || {};
+  const prepTotal = F.magia?.prep || 0;
+  if (editandoConjuros) {
+    const clave = CLASE_KEY[pj.clase]; const siempre = C.siempre || [];
+    const lista = conjurosDeClase(clave, 1).filter(s => !siempre.includes(s.id));
+    const sel = C.preparados || [];
+    return `<section class="pergamino bloque"><h2>${ico("libro")} Cambiar conjuros preparados</h2>
+      <p class="ayuda">Elige ${prepTotal}. Llevas <b>${sel.length}</b>. Pregúntale a tu DM cuándo puedes cambiarlos (normalmente al terminar un descanso largo o al subir de nivel).</p>
+      ${lista.map(s => `<label class="check-c ${sel.includes(s.id) ? "sel" : ""}"><input type="checkbox" data-prep="${s.id}" ${sel.includes(s.id) ? "checked" : ""}><span><b>${s.n}</b><small>${s.efecto}</small></span></label>`).join("")}
+      <div class="fila" style="margin-top:12px"><button class="btn laton" data-a="fin-editar">Listo</button></div></section>`;
+  }
+  const trucos = (C.trucos || []).map(i => CONJUROS[i]).filter(Boolean);
+  const prep = [...(C.siempre || []), ...(C.preparados || [])].map(i => CONJUROS[i]).filter(Boolean);
+  return `<section class="pergamino bloque">
+    <h2>${ico("libro")} Mis conjuros</h2>
+    ${pj.conc ? `<p class="aviso-conc">Te estás concentrando${typeof pj.conc === "string" ? " en <b>" + esc(pj.conc) + "</b>" : ""}. Si lanzas otro conjuro de concentración, el anterior termina.</p>` : ""}
+    ${trucos.length ? `<h3 class="sub-t">Trucos · ilimitados</h3>${trucos.map(s => tarjetaConjuro(pj, s, true)).join("")}` : ""}
+    <h3 class="sub-t">Preparados · gastan un espacio</h3>
+    ${prep.length ? prep.map(s => tarjetaConjuro(pj, s, false)).join("") : `<p class="ayuda">Aún no tienes conjuros preparados.</p>`}
+    <div style="margin-top:12px"><button class="btn tinta chico" data-a="editar-conjuros">Cambiar conjuros preparados</button></div>
+  </section>`;
+}
+function lanzarConjuro(pj, s, esTruco, comoRitual) {
+  const F = pj.ficha || {}, T = s.tirada, mag = F.magia || {}, mod = modMagico(pj);
+  let nivelEspacio = 0;
+  if (!esTruco && !comoRitual) {
+    const esp = JSON.parse(JSON.stringify(pj.espacios || {}));
+    const disp = Object.entries(esp).filter(([n, x]) => +n >= s.nv && x.max - (x.usados || 0) > 0).map(([n]) => +n).sort((a, b) => a - b);
+    if (!disp.length) return toast("No te quedan espacios de conjuro. Se recuperan con un descanso largo.");
+    nivelEspacio = disp[0];
+    if (disp.length > 1) { const r = num(prompt(`¿Con qué espacio lo lanzas? Disponibles: ${disp.join(", ")}`, String(disp[0]))); if (!disp.includes(r)) return; nivelEspacio = r; }
+    esp[nivelEspacio].usados = (esp[nivelEspacio].usados || 0) + 1; guardar("espacios", esp);
+  }
+  if (s.conc) {
+    if (pj.conc && !confirm(`Ya te concentras${typeof pj.conc === "string" ? " en " + pj.conc : ""}. ¿Lo cambias por ${s.n}?`)) { if (nivelEspacio) { const esp = JSON.parse(JSON.stringify(pj.espacios)); esp[nivelEspacio].usados--; guardar("espacios", esp); } return; }
+    guardar("conc", s.n);
+  }
+  const extra = Math.max(0, nivelEspacio - s.nv);
+  const quien = comoRitual ? "Ritual (+10 minutos, sin espacio)" : esTruco ? "Truco" : `Espacio de nivel ${nivelEspacio}`;
+  if (!T) return mostrarTirada(s.n, "✓", quien, `<div class="det" style="margin-top:6px">${s.efecto}</div>`);
+  // Construir dados
+  let dados = T.dados || ""; if (esTruco && T.escala && dados) dados = dadosTruco(dados, pj.nivel || 1);
+  let r = dados ? tirarDados(dados) : null;
+  if (r && extra && T.mas) { for (let i = 0; i < extra; i++) { const m = tirarDados(T.mas); r.total += m.total; r.det += ` +${m.det}`; } }
+  if (r && T.suma) { r.total += mod; r.det += ` ${fmt(mod)}`; }
+  if (T.atq) {
+    const rayos = T.rayos ? ((pj.nivel || 1) >= 17 ? 4 : (pj.nivel || 1) >= 11 ? 3 : (pj.nivel || 1) >= 5 ? 2 : 1) : 1;
+    const ataques = Array.from({ length: rayos }, () => { const x = d(20); return { x, tot: x + (mag.atq || 0) }; });
+    const crit = ataques.some(a => a.x === 20);
+    return mostrarTirada(s.n, ataques.map(a => a.tot).join(" / "), `${quien} · Ataque de conjuro: d20 ${ataques.map(a => `[${a.x}]`).join(" ")} ${fmt(mag.atq || 0)}`,
+      `${crit ? `<div class="critico">¡20 natural! En crítico se duplican los dados de daño.</div>` : ""}${r ? `<div class="det" style="margin-top:6px">Daño si impacta${rayos > 1 ? " (cada rayo)" : ""}: <b>${r.total}</b> ${esc(T.tipo || "")} · ${r.det}</div>` : ""}`);
+  }
+  if (T.salv) return mostrarTirada(s.n, `CD ${mag.cd ?? "—"}`, `${quien} · El objetivo hace salvación de ${CAR_LARGO[T.salv]}`, r ? `<div class="det" style="margin-top:6px">Daño: <b>${r.total}</b> ${esc(T.tipo || "")} · ${r.det}${/la mitad/.test(s.efecto) ? " (la mitad si la supera)" : ""}</div>` : "");
+  if (T.cura) return mostrarTirada(s.n, `+${r.total}`, `${quien} · Puntos de golpe curados · ${r.det}`);
+  if (T.temp) { const t = tirarDados(T.dados); const tot = t.total + 5 * extra; return mostrarTirada(s.n, `+${tot}`, `${quien} · Puntos de golpe temporales · ${t.det}${extra ? ` +${5 * extra}` : ""}`); }
+  if (r) return mostrarTirada(s.n, r.total, `${quien} · Daño ${esc(T.tipo || "")} · ${r.det}`);
 }
 
 /* ===================== VISTAS ===================== */
@@ -292,6 +381,8 @@ function vistaHoja(pj) {
     ${F.magia ? `<p class="ayuda" style="margin-top:12px">CD de tus conjuros <b>${F.magia.cd}</b> · Ataque de conjuro <b>${fmt(F.magia.atq)}</b></p>` : ""}
   </section>` : ""}
 
+
+  ${pj.conjuros ? seccionConjuros(pj) : ""}
   <section class="pergamino bloque">
     <h2>${ico("reloj")} Descansos</h2>
     <p class="ayuda">Dados de golpe disponibles: <b>${dg.max - (dg.usados || 0)} de ${dg.max}</b> (d${F.dgDado || 8}). En un descanso corto puedes gastarlos para curarte.</p>
@@ -321,9 +412,9 @@ function vistaHoja(pj) {
   <section class="pergamino bloque">
     <h2>${ico("bolsa")} Inventario</h2>
     <div class="monedas">
-      <label class="campo">Oro (po)<input type="number" min="0" data-moneda="po" value="${num(mon.po)}"></label>
-      <label class="campo">Plata (pp)<input type="number" min="0" data-moneda="pp" value="${num(mon.pp)}"></label>
-      <label class="campo">Cobre (pc)<input type="number" min="0" data-moneda="pc" value="${num(mon.pc)}"></label>
+      <label class="campo">Oro (po)<input type="number" min="0" id="mon-po" data-moneda="po" value="${num(mon.po)}"></label>
+      <label class="campo">Plata (pp)<input type="number" min="0" id="mon-pp" data-moneda="pp" value="${num(mon.pp)}"></label>
+      <label class="campo">Cobre (pc)<input type="number" min="0" id="mon-pc" data-moneda="pc" value="${num(mon.pc)}"></label>
     </div>
     <textarea id="inventario" placeholder="Lo que llevas: armas, pociones, cuerda, objetos raros…">${esc(pj.inventario ?? (F.equipo || []).join("\n"))}</textarea>
   </section>
@@ -370,6 +461,7 @@ document.addEventListener("click", async e => {
         if (pj.conc && resto > 0) toast(`Concentración: salvación de Constitución CD ${Math.min(30, Math.max(10, Math.floor(resto / 2)))}`);
       } else if (t.dataset.m === "curar") { if (pg === 0) guardar("muerte", { ok: 0, ko: 0 }); pg = Math.min(pj.pgMax, pg + cant); }
       else temp = Math.max(temp, cant);
+      $("#pg-cant").value = ""; $("#pg-cant").blur();
       if (pg !== pj.pg) guardar("pg", pg); if (temp !== (pj.pgTemp || 0)) guardar("pgTemp", temp);
       break;
     }
@@ -409,6 +501,10 @@ document.addEventListener("click", async e => {
       toast("Descanso largo completado."); break;
     }
     case "atacar": tirarAtaque(pj.ficha.armas[+t.dataset.i]); break;
+    case "lanzar": lanzarConjuro(pj, CONJUROS[t.dataset.id], t.dataset.truco === "1", false); break;
+    case "ritual": lanzarConjuro(pj, CONJUROS[t.dataset.id], false, true); break;
+    case "editar-conjuros": editandoConjuros = true; pintar(); break;
+    case "fin-editar": editandoConjuros = false; pintar(); break;
     case "d20": tirarD20(t.dataset.q, num(t.dataset.b)); break;
     case "ir-msj": $("#mensajes").scrollIntoView({ behavior: "smooth" }); break;
     case "leido": await Nube.escribir(`mesas/${S.mesaId}/mensajes/${S.uid}/${t.dataset.id}/leido`, true); break;
@@ -419,6 +515,14 @@ document.addEventListener("click", async e => {
     }
   }
 });
+document.addEventListener("change", e => {
+  const t = e.target, pj = miPJ(); if (!pj || !t.dataset.prep) return;
+  const C = { trucos: [], preparados: [], siempre: [], ...(pj.conjuros || {}) }, max = pj.ficha?.magia?.prep || 0;
+  let sel = [...(C.preparados || [])];
+  if (t.checked) { if (sel.length >= max) { t.checked = false; return toast(`Solo puedes tener ${max} preparados. Quita uno primero.`); } sel.push(t.dataset.prep); }
+  else sel = sel.filter(x => x !== t.dataset.prep);
+  guardar("conjuros", { ...C, preparados: sel });
+});
 document.addEventListener("input", e => {
   const t = e.target, pj = miPJ(); if (!pj) return;
   if (t.id === "inventario") guardarLento("inventario", t.value);
@@ -426,14 +530,15 @@ document.addEventListener("input", e => {
   if (t.dataset.moneda) guardarLento("monedas", { ...(pj.monedas || {}), [t.dataset.moneda]: Math.max(0, num(t.value)) });
 });
 document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.id === "codigo") document.querySelector("[data-a=unirse]")?.click(); });
-// Evita repintar mientras se escribe en un campo de texto
-const pintarOriginal = pintar;
+// Repinta siempre (para ver cambios en vivo) pero conserva el campo que se está escribiendo
+const pintarBase = pintar;
 pintar = function () {
   const a = document.activeElement;
-  if (a && (a.tagName === "TEXTAREA" || (a.tagName === "INPUT" && a.type !== "checkbox")) && a.id !== "codigo") { pintar.pendiente = true; return; }
-  pintarOriginal();
+  const id = a && a.id && /^(INPUT|TEXTAREA)$/.test(a.tagName) ? a.id : null;
+  const val = id ? a.value : null, ini = id ? a.selectionStart : null, fin = id ? a.selectionEnd : null;
+  pintarBase();
+  if (id) { const n = document.getElementById(id); if (n) { n.value = val; n.focus({ preventScroll: true }); try { n.setSelectionRange(ini, fin); } catch {} } }
 };
-document.addEventListener("focusout", () => setTimeout(() => { if (pintar.pendiente) { pintar.pendiente = false; pintarOriginal(); } }, 50));
 pintar();
 </script>
 </body>

@@ -50,6 +50,10 @@
   .barra-nav > div { max-width:760px; margin:0 auto; display:flex; gap:10px; }
   .barra-nav .btn.laton { flex:1; min-height:48px; }
   .acciones { display:flex; flex-wrap:wrap; gap:10px; margin:16px 0; }
+  .sub-t { font:600 .66rem var(--f-texto); letter-spacing:.16em; text-transform:uppercase; color:var(--borgona); margin:22px 0 10px; display:flex; justify-content:space-between; }
+  .sub-t .cuenta { color:var(--tinta); }
+  .opcion.conj { padding:14px 16px; }
+  .opcion.conj .d { font-size:.88rem; }
 
   /* ===== Ficha de personaje: documento ===== */
   .ficha { padding:34px 26px; font-size:.93rem; background:var(--fibras), var(--manuscrito); }
@@ -89,6 +93,7 @@
 </head>
 <body>
 <script src="ui.js"></script>
+<script src="conjuros.js"></script>
 <script type="module">if (new URLSearchParams(location.search).get("m")) import("./firebase.js");</script>
 <main>
   <div class="top"><a class="casa" href="index.html" aria-label="Volver al inicio"><svg class="ico g" aria-hidden="true"><use href="#i-casa"/></svg></a><h1>Crea tu personaje</h1><span id="lectura"></span></div>
@@ -271,7 +276,11 @@ const fmt = n => (n >= 0 ? "+" : "") + n;
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let P = {};      // personaje en construcción
 let paso = 0;
-const PASOS = ["inicio","clase","especie","trasfondo","habilidades","equipo","detalles","ficha"];
+const PASOS_BASE = ["inicio","clase","especie","trasfondo","habilidades","equipo","conjuros","detalles","ficha"];
+const lanzaConjuros = () => !!(P.clase && CLASES[P.clase].magia);
+const PASOS_F = () => PASOS_BASE.filter(x => x !== "conjuros" || lanzaConjuros());
+// Siempre preparados por rasgo de clase (no cuentan en el límite)
+const SIEMPRE = { druida: ["hablar-animales"], explorador: ["marca-cazador"] };
 
 function incrementos(clase, bg) {
   const C = CLASES[clase];
@@ -325,6 +334,12 @@ function aleatorio() {
   const libres = C.hab[1].filter(h => !fijas.includes(h));
   P.habs = libres.sort(() => Math.random() - .5).slice(0, C.hab[0]);
   if (S.habExtra) P.habExtra = [al(S.habExtra.de.filter(h => !fijas.includes(h) && !P.habs.includes(h)))];
+  P.trucos = []; P.prep = [];
+  if (C.magia) {
+    const mezclar = a => [...a].sort(() => Math.random() - .5);
+    P.trucos = mezclar(conjurosDeClase(clase, 0)).slice(0, C.magia.trucos || 0).map(s => s.id);
+    P.prep = mezclar(conjurosDeClase(clase, 1).filter(s => !(SIEMPRE[clase] || []).includes(s.id))).slice(0, C.magia.prep).map(s => s.id);
+  }
   P.nombre = `${al(NOMBRES)} ${al(APODOS)}`; P.jugador = P.jugador || "";
   P.motivo = al(MOTIVOS); P.rasgo = al(RASGOS_P); P.apariencia = al(APARIENCIAS);
 }
@@ -415,9 +430,32 @@ const VISTAS = {
           <div class="d">${e.txt}</div></button>`).join("")}</div>
     </section>`;
   },
+  conjuros: () => {
+    const C = CLASES[P.clase], M = C.magia;
+    const siempre = SIEMPRE[P.clase] || [];
+    const tarjeta = (s, lista, max) => {
+      const on = P[lista].includes(s.id);
+      return `<button class="opcion conj ${on ? "sel" : ""}" data-conj="${s.id}" data-lista="${lista}" data-max="${max}">
+        <div class="t" style="font-size:1.25rem">${s.n}</div>
+        <div class="m" style="margin-top:2px">${s.tiempo} · ${s.alcance}${s.conc ? " · Concentración" : ""}${s.ritual ? " · Ritual" : ""}</div>
+        <div class="d">${s.efecto}</div></button>`;
+    };
+    const trucos = M.trucos ? conjurosDeClase(P.clase, 0) : [];
+    const nv1 = conjurosDeClase(P.clase, 1).filter(s => !siempre.includes(s.id));
+    return `<section class="pergamino hoja">
+      <span class="eyebrow">Paso 6 · Conjuros</span>
+      <h2>Elige tu magia</h2>
+      <p class="ayuda">Los <b>trucos</b> los lanzas cuantas veces quieras. Los <b>conjuros de nivel 1</b> gastan un espacio de conjuro (tienes ${M.esp}); se recuperan con un descanso largo.${P.clase === "mago" ? " Como mago, estos son los que preparas de tu libro." : ""}</p>
+      ${siempre.length ? `<p class="ayuda">Además siempre tienes preparado: <b>${siempre.map(i => CONJUROS[i].n).join(", ")}</b> (no cuenta en el límite).</p>` : ""}
+      ${M.trucos ? `<h3 class="sub-t">Trucos · elige ${M.trucos} <span class="cuenta">${P.trucos.length}/${M.trucos}</span></h3><div class="opciones">${trucos.map(s => tarjeta(s, "trucos", M.trucos)).join("")}</div>` : ""}
+      <h3 class="sub-t">Conjuros de nivel 1 · elige ${M.prep} <span class="cuenta">${P.prep.length}/${M.prep}</span></h3>
+      <div class="opciones">${nv1.map(s => tarjeta(s, "prep", M.prep)).join("")}</div>
+      <p class="ayuda" style="margin-top:14px">No te preocupes por elegir perfecto: con tu DM podrás cambiarlos más adelante.</p>
+    </section>`;
+  },
   detalles: () => `
     <section class="pergamino hoja">
-      <span class="eyebrow">Paso 6 · Personalidad</span>
+      <span class="eyebrow">${lanzaConjuros() ? "Paso 7" : "Paso 6"} · Personalidad</span>
       <h2>Dale vida a tu personaje</h2>
       <p class="ayuda">Esto no cambia los números, pero hace la historia más divertida. Usa el dado para tomar ideas al azar.</p>
       <div class="fila-d"><label class="f">Nombre<input class="t" id="d-nombre" value="${esc(P.nombre || "")}"></label><button class="btn tinta" data-dado="nombre" aria-label="Nombre al azar">${ico("dado")}</button></div>
@@ -449,7 +487,8 @@ const VISTAS = {
       <table class="armas"><tr><th>Arma</th><th>Ataque</th><th>Daño</th></tr>${R.armas.map(a => `<tr><td>${a.n}</td><td><b>${fmt(a.atq)}</b></td><td>${a.dmg}</td></tr>`).join("")}</table>
       ${R.mag ? `<h3>Magia</h3><ul><li>Característica: <b>${CAR_N[R.mag.car]}</b> · CD de salvación <b>${R.mag.cd}</b> · Ataque de conjuro <b>${fmt(R.mag.atq)}</b></li>
         <li>${R.mag.trucos ? `<b>${R.mag.trucos}</b> trucos · ` : ""}<b>${R.mag.prep}</b> conjuros preparados · Espacios: ${R.mag.esp}</li>
-        <li><i>Elige tus conjuros de la lista de ${R.C.n.toLowerCase()} con ayuda de tu DM.</i></li></ul>` : ""}
+        ${(P.trucos || []).length ? `<li><b>Trucos:</b> ${P.trucos.map(i => CONJUROS[i].n).join(", ")}</li>` : ""}
+        <li><b>Preparados:</b> ${[...(SIEMPRE[P.clase] || []), ...(P.prep || [])].map(i => CONJUROS[i].n).join(", ") || "—"}</li></ul>` : ""}
       <div class="dos">
         <div><h3>Salvaciones</h3><div class="hab">${salv}</div></div>
         <div><h3>Habilidades</h3><div class="hab">${habs}</div></div>
@@ -469,7 +508,7 @@ const VISTAS = {
 };
 
 function puedeSeguir() {
-  const v = PASOS[paso];
+  const v = PASOS_F()[paso];
   if (v === "clase") return !!P.clase;
   if (v === "especie") return !!P.especie && (!ESPECIES[P.especie].sub || !!P.sub);
   if (v === "trasfondo") return !!P.bg;
@@ -477,19 +516,20 @@ function puedeSeguir() {
     const S = ESPECIES[P.especie];
     return P.habs.length === CLASES[P.clase].hab[0] && (!S.habExtra || !!P.habExtra?.[0]);
   }
+  if (v === "conjuros") { const M = CLASES[P.clase].magia; return P.trucos.length === (M.trucos || 0) && P.prep.length === M.prep; }
   if (v === "detalles") return !!(P.nombre || "").trim();
   return true;
 }
 function pintar() {
-  const v = PASOS[paso];
+  const v = PASOS_F()[paso];
   $("#vista").innerHTML = VISTAS[v]();
-  const total = PASOS.length - 2;
+  const total = PASOS_F().length - 2;
   $("#prog").style.width = (v === "inicio" ? 0 : v === "ficha" ? 100 : (paso / (total + 1)) * 100) + "%";
   $("#paso-txt").textContent = v === "inicio" || v === "ficha" ? "" : `Paso ${paso} de ${total}`;
   $("#nav").style.display = v === "inicio" ? "none" : "";
   $("#sig").style.display = v === "ficha" ? "none" : "";
   $("#atras").innerHTML = ico("anterior") + (v === "ficha" && P.modo === "azar" ? " Inicio" : " Atrás");
-  $("#sig").innerHTML = PASOS[paso + 1] === "ficha" ? `Ver mi ficha ${ico("check")}` : `Siguiente ${ico("siguiente")}`;
+  $("#sig").innerHTML = PASOS_F()[paso + 1] === "ficha" ? `Ver mi ficha ${ico("check")}` : `Siguiente ${ico("siguiente")}`;
   $("#sig").disabled = !puedeSeguir();
   window.scrollTo(0, 0);
 }
@@ -497,13 +537,19 @@ function refrescarBoton() { $("#sig").disabled = !puedeSeguir(); }
 
 /* ============================ EVENTOS ============================ */
 document.addEventListener("click", e => {
-  const t = e.target.closest("[data-ir],[data-set],[data-dado],[data-accion]");
+  const t = e.target.closest("[data-ir],[data-set],[data-dado],[data-accion],[data-conj]");
   if (!t) return;
-  if (t.dataset.ir === "azar") { aleatorio(); paso = PASOS.indexOf("ficha"); return pintar(); }
-  if (t.dataset.ir === "elegir") { P = { modo:"elegir", habs:[] }; paso = 1; return pintar(); }
+  if (t.dataset.conj) {
+    const L = P[t.dataset.lista], id = t.dataset.conj, max = +t.dataset.max;
+    if (L.includes(id)) L.splice(L.indexOf(id), 1);
+    else { if (L.length >= max) return toast(`Ya elegiste ${max}. Quita uno primero.`); L.push(id); }
+    const y = window.scrollY; pintar(); window.scrollTo(0, y); return;
+  }
+  if (t.dataset.ir === "azar") { aleatorio(); paso = PASOS_F().indexOf("ficha"); return pintar(); }
+  if (t.dataset.ir === "elegir") { P = { modo:"elegir", habs:[], trucos:[], prep:[] }; paso = 1; return pintar(); }
   if (t.dataset.set) {
     const k = t.dataset.set, v = t.dataset.v;
-    if (k === "clase" && P.clase !== v) { P.clase = v; P.bg = CLASES[v].bg; P.habs = []; P.opEq = "A"; }
+    if (k === "clase" && P.clase !== v) { P.clase = v; P.bg = CLASES[v].bg; P.habs = []; P.opEq = "A"; P.trucos = []; P.prep = []; }
     if (k === "especie" && P.especie !== v) { P.especie = v; P.sub = ESPECIES[v].sub ? Object.keys(ESPECIES[v].sub.ops)[0] : null; P.habExtra = null; }
     if (k === "bg" && P.bg !== v) { P.bg = v; P.habs = P.habs.filter(h => !TRASFONDOS[v].hab.includes(h)); P.habExtra = null; }
     if (k === "opEq") P.opEq = v;
@@ -538,7 +584,7 @@ document.addEventListener("input", e => {
 });
 $("#sig").onclick = () => { if (puedeSeguir()) { paso++; pintar(); } };
 $("#atras").onclick = () => {
-  if (PASOS[paso] === "ficha" && P.modo === "azar") { paso = 0; return pintar(); }
+  if (PASOS_F()[paso] === "ficha" && P.modo === "azar") { paso = 0; return pintar(); }
   paso = Math.max(0, paso - 1); pintar();
 };
 
@@ -555,6 +601,7 @@ function construirPJ() {
     ca: R.ca, bono: R.ini, pgMax: R.pg, pg: R.pg, pgTemp: 0, espacios,
     notas: `${R.S.n} · ${R.B.n}`, muerte: { ok: 0, ko: 0 }, agot: 0, conc: false, insp: false,
     dg: { max: 1, usados: 0 }, monedas: { po, pp: 0, pc: 0 },
+    conjuros: R.mag ? { trucos: [...(P.trucos || [])], preparados: [...(P.prep || [])], siempre: [...(SIEMPRE[P.clase] || [])] } : null,
     inventario: `${R.eq.txt}\nDel trasfondo (${R.B.n.toLowerCase()}): su paquete de equipo. Herramienta: ${R.B.herr}.`,
     ficha: {
       especie: R.S.n + (P.sub ? ` (${P.sub})` : ""), trasfondo: R.B.n, vel: R.vel, pb: R.pb, dgDado: R.C.dg, percPas: R.percPas,
